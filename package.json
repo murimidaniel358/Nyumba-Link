@@ -1,0 +1,17 @@
+{
+  "name": "nyumba-link",
+  "version": "1.0.0",
+  "description": "Nyumba Link: student accommodation platform for Kenya.",
+  "private": true,
+  "scripts": {
+    "dev": "live-server --port=5173 --open=/",
+    "start": "live-server --port=5173 --no-browser"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  },
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "keywords": ["real-estate", "property", "kenya", "supabase"]
+}
