@@ -1,13 +1,36 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Property details — Nyumba Link</title><link rel=stylesheet href=styles.css><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel=stylesheet></head><body><div id=hd></div><main><div id=v></div></main><footer id=ft></footer><div id=toast></div><script src=common.js></script><script>
-const p=D.find(x=>x.id==new URLSearchParams(location.search).get('id')),v=$('#v');
-if(!p)v.innerHTML='<section class=wrap><h1>Property not found</h1><a class=back href=find.html>Back to listings</a></section>';else{
-document.title=p.name+' — Nyumba Link';
-const days=Math.floor((Date.now()-new Date(p.conf))/864e5),dt=new Date(p.conf).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-const fac=[['Furnished',p.furn],['Wi-Fi',p.wifi],['Running water',p.water],['Security',p.sec]].filter(f=>f[1]).map(f=>f[0]);
-const sim=D.filter(x=>x.uni==p.uni&&x.id!=p.id).slice(0,3);
-v.innerHTML=`<section class=wrap><a href=find.html class=back>← Back to listings</a><div class=det><div><img id=big class=big src="${art(p.hue)}" alt=""><div class=thumbs>${L([0,20,40],o=>`<img src="${art(p.hue+o)}" onclick="big.src=this.src" alt="">`)}</div>
-<div class=panel style="margin-top:20px"><h3>Details</h3><br><dl class=kv><dt>Room type</dt><dd>${p.type}</dd><dt>Location</dt><dd>${esc(p.area)} <small>(exact address shared by the advertiser on enquiry)</small></dd><dt>Nearby campus</dt><dd>${esc(p.uni)}</dd><dt>Distance</dt><dd>${km(p.dist)} (about ${Math.max(1,Math.round(p.dist/80))} min walk)</dd><dt>Facilities</dt><dd>${fac.join(', ')||'None listed'}</dd><dt>Utilities</dt><dd>${p.bills?'Bills included':'Bills not included'}</dd><dt>Deposit</dt><dd>${ksh(p.dep)}</dd></dl><br><a class=back target=_blank rel=noopener href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.area+' near '+p.uni)}">View area on Google Maps →</a></div></div>
-<aside><div class=panel><span class=tag>${p.type}</span><h1>${esc(p.name)}</h1><h2>${ksh(p.rent)} <small>/month${p.type=='Shared apartment'?' per person':''}</small></h2>${pill(p.status)}<p style="margin-top:10px"><b>Availability last confirmed: ${dt}</b></p>${days>30?'<p><span class="pill warn">Not reconfirmed recently, ask before visiting</span></p>':''}<br><p>Advertiser: <b>${esc(p.adv)}</b><br>Phone: +${PH}</p><a class="btn wa" target=_blank rel=noopener href="https://wa.me/${PH}?text=${encodeURIComponent('Hi '+p.adv+', I found "'+p.name+'" on Nyumba Link ('+location.href+'). Is it still available? Can I arrange a viewing?')}">WhatsApp enquiry</a><button class="btn ghost" id=rep>Report listing</button><p><small>Arrange a viewing before paying. <a href=safety.html class=back>Safety tips</a></small></p></div></aside></div>
-<h2 class=sec>Similar properties</h2><div class=grid>${L(sim,card)}</div></section>`;
-$('#rep').onclick=()=>{const t=prompt('What is wrong with this listing?');if(t){const r=JSON.parse(localStorage.nl_reports||'[]');r.push({id:p.id,text:t,at:Date.now()});localStorage.nl_reports=JSON.stringify(r);toast('Report received. Thank you.')}}}
-</script></body></html>
+<!doctype html>
+<html lang=en>
+
+<head>
+  <meta charset=utf-8>
+  <meta name=viewport content="width=device-width,initial-scale=1">
+  <title>Property details — Nyumba Link</title>
+  <link rel=stylesheet href=styles.css>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel=stylesheet>
+</head>
+
+<body>
+  <div id=hd></div>
+  <main>
+    <div id=v></div>
+  </main>
+  <footer id=ft></footer>
+  <div id=toast></div>
+  <script src=common.js></script>
+  <script>
+    const p = D.find(x => x.id == new URLSearchParams(location.search).get('id')), v = $('#v');
+    if (!p) v.innerHTML = '<section class=wrap><h1>Property not found</h1><a class=back href=find.html>Back to listings</a></section>'; else {
+      document.title = p.name + ' — Nyumba Link';
+      const days = Math.floor((Date.now() - new Date(p.conf)) / 864e5), dt = new Date(p.conf).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      const fac = [['Furnished', p.furn], ['Wi-Fi', p.wifi], ['Running water', p.water], ['Security', p.sec]].filter(f => f[1]).map(f => f[0]);
+      const sim = D.filter(x => x.uni == p.uni && x.id != p.id).slice(0, 3);
+      v.innerHTML = `<section class=wrap><a href=find.html class=back>← Back to listings</a><div class=det><div><img id=big class=big src="${art(p.hue)}" alt=""><div class=thumbs>${L([0, 20, 40], o => `<img src="${art(p.hue + o)}" onclick="big.src=this.src" alt="">`)}</div>
+<div class=panel style="margin-top:20px"><h3>Details</h3><br><dl class=kv><dt>Room type</dt><dd>${p.type}</dd><dt>Location</dt><dd>${esc(p.area)} <small>(exact address shared by the advertiser on enquiry)</small></dd><dt>Nearby campus</dt><dd>${esc(p.uni)}</dd><dt>Distance</dt><dd>${km(p.dist)} (about ${Math.max(1, Math.round(p.dist / 80))} min walk)</dd><dt>Facilities</dt><dd>${fac.join(', ') || 'None listed'}</dd><dt>Utilities</dt><dd>${p.bills ? 'Bills included' : 'Bills not included'}</dd><dt>Deposit</dt><dd>${ksh(p.dep)}</dd></dl><br><a class=back target=_blank rel=noopener href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.area + ' near ' + p.uni)}">View area on Google Maps →</a></div></div>
+<aside><div class=panel><span class=tag>${p.type}</span><h1>${esc(p.name)}</h1><p>${rate(p)}</p><h2>${ksh(p.rent)} <small>/month${p.type == 'Shared apartment' ? ' per person' : ''}</small></h2>${pill(p.status)}<p style="margin-top:10px"><b>Availability last confirmed: ${dt}</b></p>${days > 30 ? '<p><span class="pill warn">Not reconfirmed recently, ask before visiting</span></p>' : ''}<br><p>Advertiser: <b>${esc(p.adv)}</b><br>Phone: +${PH}</p><a class="btn wa" target=_blank rel=noopener href="https://wa.me/${PH}?text=${encodeURIComponent('Hi ' + p.adv + ', I found "' + p.name + '" on Nyumba Link (' + location.href + '). Is it still available? Can I arrange a viewing?')}">WhatsApp enquiry</a><button class="btn ghost" id=rep>Report listing</button><p><small>Arrange a viewing before paying. <a href=safety.html class=back>Safety tips</a></small></p></div></aside></div>
+<h2 class=sec>Similar properties</h2><div class=grid>${L(sim, card)}</div></section>`;
+      $('#rep').onclick = () => { const t = prompt('What is wrong with this listing?'); if (t) { const r = JSON.parse(localStorage.nl_reports || '[]'); r.push({ id: p.id, text: t, at: Date.now() }); localStorage.nl_reports = JSON.stringify(r); toast('Report received. Thank you.') } }
+    }
+  </script>
+</body>
+
+</html>

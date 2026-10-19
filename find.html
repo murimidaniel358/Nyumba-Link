@@ -11,47 +11,23 @@
 
 <body>
   <div id=hd></div>
-  <main>
-    <section class=wrap>
+  <div class=dash>
+    <aside class=sb>
+      <form id=f></form>
+    </aside>
+    <main class=mn>
       <h1>Find accommodation</h1><br>
-      <div class=side>
-        <form id=f class="panel fl">
-          <h3>Filters</h3><select name=uni data-o=uni>
-            <option value="">Any institution</option>
-          </select><input name=area placeholder="Town or neighbourhood"><input name=min type=number
-            placeholder="Min rent"><input name=max type=number placeholder="Max rent"><select name=type data-o=type>
-            <option value="">Any type</option>
-          </select><select name=furn>
-            <option value="">Furnished or not</option>
-            <option value=1>Furnished</option>
-            <option value=0>Unfurnished</option>
-          </select><select name=sort>
-            <option value=new>Recently added</option>
-            <option value=price>Price: low to high</option>
-            <option value=dist>Nearest to campus</option>
-          </select>
-          <div class=chips><label><input type=checkbox name=wifi> Wi-Fi</label><label><input type=checkbox name=water>
-              Water</label><label><input type=checkbox name=sec> Security</label><label><input type=checkbox name=bills>
-              Bills included</label><label><input type=checkbox name=now> Available now</label></div><button type=reset
-            class="btn ghost">Clear filters</button>
-        </form>
-        <div>
-          <p id=ct></p><br>
-          <div class=grid id=g></div>
-        </div>
-      </div>
-    </section>
-  </main>
+      <div class=stats id=st></div>
+      <p id=ct></p><br>
+      <div class=grid id=g></div>
+    </main>
+  </div>
   <footer id=ft></footer>
   <div id=toast></div>
   <script src=common.js></script>
-  <script>const f = $('#f'); for (const [k, v] of new URLSearchParams(location.search)) if (f[k]) f[k].value = v;
-    const go = () => {
-      const d = new FormData(f), g = k => d.get(k), c = k => d.has(k), a = (g('area') || '').toLowerCase();
-      const r = D.filter(p => (!g('uni') || p.uni == g('uni')) && (!a || (p.area + ' ' + p.name).toLowerCase().includes(a)) && (!g('min') || p.rent >= +g('min')) && (!g('max') || p.rent <= +g('max')) && (!g('type') || p.type == g('type')) && (g('furn') === '' || +g('furn') == p.furn) && (!c('wifi') || p.wifi) && (!c('water') || p.water) && (!c('sec') || p.sec) && (!c('bills') || p.bills) && (!c('now') || p.status != 'Fully booked'));
-      const s = g('sort'); r.sort((x, y) => s == 'price' ? x.rent - y.rent : s == 'dist' ? x.dist - y.dist : y.n * -1 + x.n);
-      $('#ct').textContent = r.length + ' listings found'; $('#g').innerHTML = L(r, card) || '<p>No matches. Try widening your budget or filters.</p>'
-    }; f.oninput = go; f.onreset = () => setTimeout(go); go()</script>
+  <script>const f = mountSB(() => go()); const N = s => D.filter(p => p.status == s).length;
+    $('#st').innerHTML = L([['Total listings', D.length, 'On the platform', '#2563eb'], ['Available', N('Available'), 'Ready to view', '#16a34a'], ['Limited rooms', N('Limited rooms'), 'Going fast', '#d97706'], ['Fully booked', N('Fully booked'), 'Check back soon', '#e11d48']], s => `<div class=stat style="--c:${s[3]}"><small>${s[0]}</small><b>${s[1]}</b><span>${s[2]}</span></div>`);
+    const go = () => { const r = filt(f); $('#ct').textContent = r.length + ' listings found'; $('#g').innerHTML = L(r, card) || '<p>No matches. Try widening your budget or filters.</p>' }; go()</script>
 </body>
 
 </html>

@@ -4,43 +4,26 @@
 <head>
   <meta charset=utf-8>
   <meta name=viewport content="width=device-width,initial-scale=1">
-  <title>Find Your Perfect Student Home — Nyumba Link</title>
+  <title>Nyumba Link - Find Your Perfect Student Home</title>
   <link rel=stylesheet href=styles.css>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel=stylesheet>
 </head>
 
 <body>
   <div id=hd></div>
-  <main>
-    <section class=hero>
-      <h1>Find Your Perfect Student Home.</h1>
-      <p>Discover hostels, bedsitters and affordable rooms near your campus.</p>
-      <form class=search action=find.html><select name=uni data-o=uni>
-          <option value="">University or college</option>
-        </select><input name=area placeholder="Location or neighbourhood"><input name=min type=number
-          placeholder="Min budget (KSh)"><input name=max type=number placeholder="Max budget (KSh)"><select name=type
-          data-o=type>
-          <option value="">Accommodation type</option>
-        </select><button class=btn>Search</button></form>
-    </section>
-    <section class=wrap>
-      <h2 class=sec>Featured accommodation</h2>
-      <div class=side>
-        <form id=f class="panel fl">
-          <h3>Quick filters</h3><select name=uni data-o=uni>
-            <option value="">Any institution</option>
-          </select><select name=type data-o=type>
-            <option value="">Any type</option>
-          </select><input name=max type=number placeholder="Max rent (KSh)">
-          <div class=chips><label><input type=checkbox name=wifi> Wi-Fi</label><label><input type=checkbox name=water>
-              Water</label><label><input type=checkbox name=sec> Security</label></div><button type=reset
-            class="btn ghost">Clear filters</button><a class=back href=find.html>All filters →</a>
-        </form>
-        <div>
-          <div class=grid id=feat></div>
-          <p style="margin-top:16px"><a class=back href=find.html>See all listings →</a></p>
-        </div>
-      </div>
+  <section class=hero>
+    <h1>Find Your Perfect Student Home.</h1>
+    <p>Discover hostels, bedsitters and affordable rooms near your campus.</p>
+  </section>
+  <div class=dash>
+    <aside class=sb>
+      <form id=f></form>
+    </aside>
+    <main class=mn>
+      <h2 class=sec id=ttl style="margin-top:0">Featured accommodation</h2>
+      <p id=ct></p><br>
+      <div class=grid id=feat></div>
+      <p style="margin-top:16px"><a class=back href=find.html>See all listings →</a></p>
       <h2 class=sec>Browse by institution</h2>
       <div class=two id=inst></div>
       <h2 class=sec>How it works</h2>
@@ -56,12 +39,17 @@
         <p>Reach students searching near your campus.</p><br><a class="btn ghost" style="width:auto" href=list.html>List
           your property</a>
       </div>
-    </section>
-  </main>
+    </main>
+  </div>
   <footer id=ft></footer>
   <div id=toast></div>
   <script src=common.js></script>
-  <script>const f = $('#f'), go = () => { const d = new FormData(f), g = k => d.get(k); $('#feat').innerHTML = L(D.filter(p => p.status != 'Fully booked' && (!g('uni') || p.uni == g('uni')) && (!g('type') || p.type == g('type')) && (!g('max') || p.rent <= +g('max')) && (!d.has('wifi') || p.wifi) && (!d.has('water') || p.water) && (!d.has('sec') || p.sec)).slice(0, 6), card) || '<p>No featured matches. Try All filters.</p>' }; f.oninput = go; f.onreset = () => setTimeout(go); go(); $('#inst').innerHTML = L(UNI, u => `<a class=cat href="find.html?uni=${encodeURIComponent(u)}"><b>${u}</b><small>${D.filter(p => p.uni == u).length} listings</small></a>`)</script>
+  <script>const f = mountSB(() => go());
+    const go = () => {
+      let r = filt(f); const act = [...new FormData(f)].some(([k, v]) => v && k != 'sort'); if (!act) r = r.filter(p => p.status != 'Fully booked').slice(0, 6);
+      $('#ttl').textContent = act ? 'Matching accommodation' : 'Featured accommodation'; $('#ct').textContent = act ? r.length + ' listings found' : ''; $('#feat').innerHTML = L(r, card) || '<p>No matches. Try widening your filters.</p>'
+    };
+    $('#inst').innerHTML = L(UNI, u => `<a class=cat href="find.html?uni=${encodeURIComponent(u)}"><b>${u}</b><small>${D.filter(p => p.uni == u).length} listings</small></a>`); go()</script>
 </body>
 
 </html>
