@@ -978,3 +978,108 @@ b.rn {
 .rs div:hover button:hover~button {
   color: #cbd5e1
 }
+
+/* Burger menu (small screens) */
+.links {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap
+}
+
+.bg {
+  display: none;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--b3);
+  background: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  padding: 0
+}
+
+.bg span {
+  display: block;
+  position: relative;
+  width: 20px;
+  height: 2px;
+  background: var(--b);
+  border-radius: 2px;
+  transition: .3s
+}
+
+.bg span::before,
+.bg span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  width: 20px;
+  height: 2px;
+  background: var(--b);
+  border-radius: 2px;
+  transition: .3s
+}
+
+.bg span::before {
+  top: -6px
+}
+
+.bg span::after {
+  top: 6px
+}
+
+.bg.open span {
+  background: transparent
+}
+
+.bg.open span::before {
+  top: 0;
+  transform: rotate(45deg)
+}
+
+.bg.open span::after {
+  top: 0;
+  transform: rotate(-45deg)
+}
+
+@media(max-width:800px) {
+  .bg {
+    display: inline-flex
+  }
+
+  nav {
+    gap: 10px;
+    flex-wrap: nowrap
+  }
+
+  .logo {
+    font-size: 1.3rem
+  }
+
+  .links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    background: #fff;
+    padding: 8px 5vw 16px;
+    border-bottom: 1px solid var(--b3);
+    box-shadow: var(--sh);
+    animation: in .25s both
+  }
+
+  .links.open {
+    display: flex
+  }
+
+  .links a {
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--b3)
+  }
+}
