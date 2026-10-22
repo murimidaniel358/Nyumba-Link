@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin inbox — Nyumba Link</title>
+  <title>Admin inbox — MyKejaLink</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
@@ -38,10 +38,10 @@
     } else {
       const userId = session.user.id;
       const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', userId).single();
-      if (profileError || !profile || !['student', 'landlord', 'agent'].includes(profile.role)) {
-        status.textContent = 'This inbox is for student, landlord, and agent accounts.';
+      if (profileError || !profile || !['student', 'applicant', 'landlord', 'agent'].includes(profile.role)) {
+        status.textContent = 'This inbox is for student, advertiser applicant, landlord, and agent accounts.';
       } else {
-        const dashboardByRole = { student: 'find.html', landlord: 'landlord-dashboard.html', agent: 'agent-dashboard.html' };
+        const dashboardByRole = { student: 'find.html', applicant: 'find.html', landlord: 'landlord-dashboard.html', agent: 'agent-dashboard.html' };
         document.getElementById('inboxBack').href = dashboardByRole[profile.role];
         const { data: messages, error } = await supabase.from('admin_messages')
           .select('id, context_type, context_id, subject, body, created_at, read_at')
@@ -75,7 +75,7 @@
             card.append(make('p', 'inbox-message-body', message.body));
             if (message.context_type === 'application') {
               const application = applicationById.get(message.context_id);
-              if (application && profile.role === 'student') {
+              if (application && ['student', 'applicant'].includes(profile.role)) {
                 const form = make('form', 'inbox-reapply-form');
                 const label = make('label', '', `Update your ${application.applicant_role} application details`);
                 const textarea = document.createElement('textarea');
@@ -101,9 +101,17 @@
                   if (submitError) {
                     result.textContent = submitError.message || 'Could not resubmit your application.';
                   } else {
-                    result.textContent = 'Your updated application has been sent for review.';
+                    const { error: signOutError } = await supabase.auth.signOut();
+                    result.textContent = signOutError
+                      ? 'Your updated application has been sent for review, but we could not sign you out. Use Log out before browsing as a guest.'
+                      : 'Your updated application has been sent for review. You are signed out and can continue browsing as a guest.';
                     textarea.disabled = true;
                     submit.disabled = true;
+                    if (!signOutError) {
+                      const guestLink = make('a', 'btn sm', 'Continue browsing as a guest');
+                      guestLink.href = 'find.html';
+                      result.after(guestLink);
+                    }
                   }
                 });
                 card.append(form);

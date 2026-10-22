@@ -1,5 +1,5 @@
 -- Allow administrators to permanently remove a user account and its
--- Nyumba Link listings and verification requests.
+-- MyKejaLink listings and verification requests.
 create or replace function public.admin_delete_user(p_user_id uuid)
 returns void
 language plpgsql

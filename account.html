@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login / Sign Up — Nyumba Link</title>
+  <title>Login / Sign Up — MyKejaLink</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
@@ -115,7 +115,7 @@
           </div>
 
           <div class="auth-field">
-            <label for="requestedRole">I want to use Nyumba Link as</label>
+            <label for="requestedRole">I want to use MyKejaLink as</label>
             <select id="requestedRole" name="requestedRole">
               <option value="student">Student — find accommodation</option>
               <option value="landlord">Landlord — advertise my property</option>
@@ -156,6 +156,7 @@
         </button>
 
         <small id="authMessage" class="auth-message" role="status" aria-live="polite"></small>
+        <a id="guestBrowseLink" class="btn ghost" href="find.html" hidden>Continue browsing as a guest</a>
 
         <small class="auth-note">
           Keep your password private. Landlord and agent applications
@@ -187,6 +188,7 @@
     const submitButton = document.getElementById('submitButton');
     const formTitle = document.getElementById('formTitle');
     const authMessage = document.getElementById('authMessage');
+    const guestBrowseLink = document.getElementById('guestBrowseLink');
     const authTabs = document.getElementById('authTabs');
     const forgotPassword = document.getElementById('forgotPassword');
     const passwordLabel = document.querySelector('label[for="password"]');
@@ -239,6 +241,19 @@
         : 'Log in';
 
       showMessage('');
+      guestBrowseLink.hidden = true;
+    }
+
+    async function continueAsGuest(role) {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      const roleLabel = role === 'agent' ? 'agent' : 'landlord';
+      showMessage(
+        `Your ${roleLabel} application is waiting for administrator approval. ` +
+        'You are signed out and can browse listings as a guest while it is reviewed.'
+      );
+      guestBrowseLink.hidden = false;
     }
 
     signupTab.addEventListener('click', () => setMode('signup'));
@@ -278,6 +293,21 @@
         );
       }
 
+      // New advertiser applications have their own non-student role.
+      // Keep older pending/rejected student-role applications compatible.
+      if (profile.role === 'applicant') {
+        const { data: applicantRequests, error: applicantRequestError } = await supabase
+          .from('verification_requests')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .eq('applicant_role', intendedRole)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        if (applicantRequestError) throw new Error('We could not check your verification request. Please try again.');
+        if (applicantRequests.length) return applicantRequests[0].status;
+        throw new Error('Your advertiser profile has no application on record. Please contact support.');
+      }
+
       // Never create a request for an account already assigned
       // an advertiser or administrator role.
       if (profile.role !== 'student') {
@@ -309,19 +339,16 @@
         return;
       }
 
-      const { error: insertError } = await supabase
-        .from('verification_requests')
-        .insert({
-          user_id: user.id,
-          applicant_role: intendedRole,
-          details,
-          status: 'pending'
-        });
+      const { error: submitError } = await supabase.rpc('submit_advertiser_application', {
+        p_applicant_role: intendedRole,
+        p_details: details
+      });
 
-      if (insertError) {
+      if (submitError) {
         throw new Error(
-          'Your account is active, but we could not submit ' +
-          'your advertiser verification request. Please contact support.'
+          submitError.code === '42883' || submitError.code === 'PGRST202'
+            ? 'Advertiser applications are not enabled yet. Run supabase/advertiser_applicant_role.sql in Supabase, then try again.'
+            : submitError.message || 'We could not submit your advertiser application. Please try again.'
         );
       }
       return 'pending';
@@ -345,6 +372,21 @@
       if (profile.role === 'admin') {
         window.location.href = 'admin-dashboard.html';
         return;
+      }
+
+      if (
+        ['student', 'applicant'].includes(profile.role) &&
+        ['landlord', 'agent'].includes(user.user_metadata?.requested_role)
+      ) {
+        const applicationStatus = await submitVerificationRequest(user);
+        if (applicationStatus === 'pending') {
+          await continueAsGuest(user.user_metadata.requested_role);
+          return;
+        }
+        if (applicationStatus === 'rejected') {
+          window.location.href = 'inbox.html';
+          return;
+        }
       }
 
       if (profile.role === 'landlord' || profile.role === 'agent') {
@@ -416,19 +458,13 @@
           }
 
           if (!data.session) {
-            showMessage(
-              'Account created. Check your email for a ' +
-              'confirmation link, then return here and log in. ' +
-              'Your account will remain a student account until ' +
-              'an administrator approves any advertiser request.'
-            );
+            const advertiser = ['landlord', 'agent'].includes(role);
+            showMessage(advertiser
+              ? 'Account created. Confirm your email, then log in here to submit your advertiser application for review. You can browse listings as a guest while you wait.'
+              : 'Account created. Check your email for a confirmation link, then return here and log in.');
+            guestBrowseLink.hidden = !advertiser;
             return;
           }
-
-          await submitVerificationRequest(data.user);
-
-          showMessage('Account created successfully.');
-
           await routeUser(data.user);
         } else {
           const { data, error } =
@@ -451,11 +487,17 @@
         }
       } catch (error) {
         console.error('Authentication error:', error);
-
-        showMessage(
-          error.message ||
-          'Something went wrong. Please try again.'
-        );
+        const { data: { session } } = await supabase.auth.getSession();
+        const applicantRole = session?.user.user_metadata?.requested_role;
+        if (session && ['landlord', 'agent'].includes(applicantRole)) {
+          const { error: signOutError } = await supabase.auth.signOut();
+          showMessage(signOutError
+            ? 'We could not confirm your advertiser application or sign you out. Please use Log out before browsing as a guest, then contact support to check your application.'
+            : 'We could not confirm your advertiser application. You are signed out and can browse as a guest. Please log in again later or contact support to check your application.');
+          guestBrowseLink.hidden = Boolean(signOutError);
+        } else {
+          showMessage(error.message || 'Something went wrong. Please try again.');
+        }
       } finally {
         submitButton.disabled = false;
       }

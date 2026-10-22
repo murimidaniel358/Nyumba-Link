@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin Dashboard — Nyumba Link</title>
+  <title>Admin Dashboard — MyKejaLink</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
@@ -47,19 +47,19 @@
         <div id="requestList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading requests…</p></div></div>
       </section>
       <section class="dash-section" id="landlords">
-        <div class="dash-section-head"><div><h2>Landlords</h2><p>Approved landlord accounts on Nyumba Link.</p></div><button class="btn sm" data-refresh-users="landlord" type="button">Refresh</button></div>
+        <div class="dash-section-head"><div><h2>Landlords</h2><p>Approved landlord accounts on MyKejaLink.</p></div><button class="btn sm" data-refresh-users="landlord" type="button">Refresh</button></div>
         <p class="admin-listing-count">Landlords: <strong id="landlordCount">—</strong></p>
-        <div id="landlordList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading landlords…</p></div></div>
+        <details class="institution-dropdown admin-user-dropdown"><summary>Show landlord accounts</summary><div id="landlordList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading landlords…</p></div></div></details>
       </section>
       <section class="dash-section" id="agents">
-        <div class="dash-section-head"><div><h2>Agents</h2><p>Approved real estate agent accounts on Nyumba Link.</p></div><button class="btn sm" data-refresh-users="agent" type="button">Refresh</button></div>
+        <div class="dash-section-head"><div><h2>Agents</h2><p>Approved real estate agent accounts on MyKejaLink.</p></div><button class="btn sm" data-refresh-users="agent" type="button">Refresh</button></div>
         <p class="admin-listing-count">Agents: <strong id="agentCount">—</strong></p>
-        <div id="agentList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading agents…</p></div></div>
+        <details class="institution-dropdown admin-user-dropdown"><summary>Show agent accounts</summary><div id="agentList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading agents…</p></div></div></details>
       </section>
       <section class="dash-section" id="students">
-        <div class="dash-section-head"><div><h2>Students</h2><p>Student accounts registered on Nyumba Link.</p></div><button class="btn sm" data-refresh-users="student" type="button">Refresh</button></div>
+        <div class="dash-section-head"><div><h2>Students</h2><p>Student accounts registered on MyKejaLink.</p></div><button class="btn sm" data-refresh-users="student" type="button">Refresh</button></div>
         <p class="admin-listing-count">Students: <strong id="studentCount">—</strong></p>
-        <div id="studentList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading students…</p></div></div>
+        <details class="institution-dropdown admin-user-dropdown"><summary>Show student accounts</summary><div id="studentList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading students…</p></div></div></details>
       </section>
       <section class="dash-section" id="universities">
         <div class="dash-section-head"><div><h2>Universities, colleges &amp; TVETs</h2><p>Manage the institutions students can select in the accommodation filters.</p></div><button class="btn sm" id="refreshUniversities" type="button">Refresh</button></div>
@@ -101,7 +101,7 @@
       </section>
       <section class="dash-section" id="support">
         <h2>Admin support</h2>
-        <div class="admin-support-card"><div><b>Need help with an application or account?</b><p>Contact the Nyumba Link support team. You can return to this dashboard section from the support page.</p></div><a class="btn sm" href="contact.html?from=admin-dashboard&amp;section=support">Contact support</a></div>
+        <div class="admin-support-card"><div><b>Need help with an application or account?</b><p>Contact the MyKejaLink support team. You can return to this dashboard section from the support page.</p></div><a class="btn sm" href="contact.html?from=admin-dashboard&amp;section=support">Contact support</a></div>
       </section>
     </section>
   </main>
@@ -195,7 +195,7 @@
     const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
     const propertyTypeName = (value) => ({ bedsitter: 'Bedsitter', single_room: 'Single room', studio_apartment: 'Studio apartment', one_bedroom: 'One bedroom', shared_room: 'Shared room', hostel: 'Hostel', other: 'Other' }[value] || value || 'Property');
 
-    function displayRequests(requests) {
+    function displayRequests(requests, applicantProfiles = new Map()) {
       list.replaceChildren();
       count.textContent = String(requests.length);
       if (!requests.length) {
@@ -208,6 +208,10 @@
       }
 
       requests.forEach((request) => {
+        const profile = applicantProfiles.get(request.user_id) || {};
+        const applicantName = profile.full_name || profile.name || profile.display_name || 'Name not provided';
+        const applicantEmail = profile.email || '';
+        const applicantPhone = profile.phone || profile.phone_number || '';
         const card = node('article', 'request-card');
         const header = node('div', 'request-head');
         const heading = node('div', '');
@@ -216,8 +220,21 @@
         header.append(heading);
         header.append(node('span', 'request-date', request.created_at ? new Date(request.created_at).toLocaleDateString() : 'Date not provided'));
         card.append(header);
+        const applicant = node('div', 'application-applicant-details');
+        applicant.append(node('h3', '', applicantName));
+        if (applicantEmail) {
+          const email = node('a', '', applicantEmail);
+          email.href = `mailto:${encodeURIComponent(applicantEmail)}`;
+          applicant.append(email);
+        }
+        if (applicantPhone) {
+          const phone = node('a', '', applicantPhone);
+          phone.href = `tel:${applicantPhone.replace(/[^+\d]/g, '')}`;
+          applicant.append(phone);
+        }
+        card.append(applicant);
         card.append(node('p', 'request-details', request.details || 'No application details were provided.'));
-        card.append(node('p', 'request-user', `Applicant account: ${request.user_id || 'Unknown'}`));
+        card.append(node('p', 'request-user application-account-id', `Account ID: ${request.user_id || 'Unknown'}`));
         const actions = node('div', 'request-actions');
         const approve = node('button', 'btn sm', 'Approve advertiser');
         approve.type = 'button';
@@ -245,7 +262,14 @@
         showStatus('Your admin access is active, but verification requests could not be loaded.', true);
         return;
       }
-      displayRequests(data || []);
+      const requests = data || [];
+      const applicantIds = [...new Set(requests.map((request) => request.user_id).filter(Boolean))];
+      let applicantProfiles = new Map();
+      if (applicantIds.length) {
+        const { data: profiles } = await supabase.from('profiles').select('*').in('id', applicantIds);
+        applicantProfiles = new Map((profiles || []).map((profile) => [profile.id, profile]));
+      }
+      displayRequests(requests, applicantProfiles);
       showStatus('Administrator access confirmed. Review pending advertiser applications below.');
     }
 
@@ -328,6 +352,20 @@
       if (!adminReady || !accountSections[role]) return;
       const target = accountSections[role];
       target.list.replaceChildren(node('div', 'dash-empty', `Loading ${target.label}…`));
+      let advertiserApplicantIds = new Set();
+      if (role === 'student') {
+        const { data: applications, error: applicationsError } = await supabase
+          .from('verification_requests')
+          .select('user_id')
+          .in('applicant_role', ['landlord', 'agent'])
+          .in('status', ['pending', 'rejected']);
+        if (applicationsError) {
+          target.count.textContent = '—';
+          target.list.replaceChildren(node('div', 'dash-empty', 'Could not separate advertiser applicants from student accounts. Check administrator access to verification requests and try again.'));
+          return;
+        }
+        advertiserApplicantIds = new Set((applications || []).map((application) => application.user_id));
+      }
       let query = supabase.from('profiles').select('*').eq('role', role);
       if (role === 'landlord' || role === 'agent') query = query.eq('verification_status', 'verified');
       const { data, error } = await query;
@@ -336,7 +374,7 @@
         target.list.replaceChildren(node('div', 'dash-empty', `Could not load ${target.label}. Check the administrator profile access policy and try again.`));
         return;
       }
-      const profiles = data || [];
+      const profiles = (data || []).filter((profile) => !advertiserApplicantIds.has(profile.id));
       accountProfiles.forEach((profile, id) => {
         if (profile.role === role) accountProfiles.delete(id);
       });

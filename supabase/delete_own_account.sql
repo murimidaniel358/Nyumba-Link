@@ -1,4 +1,4 @@
--- Allow students, landlords and agents to permanently delete their own account.
+-- Allow students, advertiser applicants, landlords and agents to permanently delete their own account.
 -- Administrator accounts cannot use this self-service endpoint.
 create or replace function public.delete_own_account()
 returns boolean
@@ -19,8 +19,8 @@ begin
   from public.profiles p
   where p.id = v_user_id;
 
-  if v_role is null or v_role not in ('student', 'landlord', 'agent') then
-    raise exception using errcode = '42501', message = 'Only student, landlord and agent accounts can use self-service deletion';
+  if v_role is null or v_role not in ('student', 'applicant', 'landlord', 'agent') then
+    raise exception using errcode = '42501', message = 'This account cannot use self-service deletion';
   end if;
 
   -- Remove dependent application data explicitly, then remove the Auth user.

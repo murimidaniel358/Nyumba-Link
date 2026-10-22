@@ -1,7 +1,7 @@
 {
-  "name": "nyumba-link",
+  "name": "mykejalink",
   "version": "1.0.0",
-  "description": "Nyumba Link: student accommodation platform for Kenya.",
+  "description": "MyKejaLink: student accommodation platform for Kenya.",
   "private": true,
   "scripts": {
     "dev": "live-server --port=5173 --open=/",

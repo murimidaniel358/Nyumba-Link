@@ -1,4 +1,4 @@
--- Extend the existing Nyumba Link properties table without replacing its data.
+-- Extend the existing MyKejaLink properties table without replacing its data.
 -- Existing columns retained: id, owner_id, title, description, location,
 -- monthly_rent, property_type, status, created_at.
 

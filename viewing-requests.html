@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My viewing requests — MyKejaLink</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="hd"></div>
+  <main class="wrap viewing-requests-page">
+    <a class="back" href="saved-listings.html">← Back to my dashboard</a>
+    <p class="eyebrow">STUDENT DASHBOARD</p>
+    <h1>My viewing requests</h1>
+    <p>Keep track of requested viewing times and advertiser replies.</p>
+    <div id="studentViewingRequests" class="request-list"><div class="dash-empty">Loading your requests…</div></div>
+  </main>
+  <footer id="ft"></footer>
+  <div id="toast"></div>
+  <script src="common.js"></script>
+  <script type="module">
+    import { mountStudentViewingRequests } from './viewing-requests.js';
+    await mountStudentViewingRequests(document.getElementById('studentViewingRequests'));
+  </script>
+</body>
+</html>

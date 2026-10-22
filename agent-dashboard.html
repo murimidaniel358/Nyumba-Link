@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Agent Dashboard — Nyumba Link</title>
+  <title>Agent Dashboard — MyKejaLink</title>
   <link rel="stylesheet" href="styles.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
@@ -14,6 +14,8 @@
       <p class="dash-nav-label">WORKSPACE</p>
       <a class="active" href="#overview">Overview</a>
       <a href="#listings">My listings</a>
+      <a href="#viewings">Viewing requests</a>
+      <a href="#ratings">Listing ratings</a>
       <a href="list.html">Listing guide</a>
     </aside>
     <section class="dash-content" id="overview">
@@ -41,10 +43,12 @@
   <script type="module">
     import { supabase } from './supabase-client.js';
     import { mountListingManager } from './dashboard-listings.js';
+    import { mountOwnerViewingRequests } from './viewing-requests.js';
+    import { mountOwnerRatingNotifications } from './listing-ratings.js';
     const status = document.getElementById('dashboardStatus');
     const sectionBack = document.getElementById('sectionBack');
     const sectionHistory = [];
-    let currentSection = ['overview', 'listings'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
+    let currentSection = ['overview', 'listings', 'viewings', 'ratings'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
     function showDashboardSection(sectionId) {
       const section = document.getElementById(sectionId);
       if (!section) return;
@@ -91,6 +95,8 @@
           document.getElementById('dashboardName').textContent = session.user.user_metadata?.full_name || session.user.email || 'Agent';
           status.textContent = 'Your agent account is verified and ready.';
           await mountListingManager(session.user);
+          await mountOwnerViewingRequests(session.user);
+          await mountOwnerRatingNotifications(session.user);
         }
       }
     } catch (error) { status.textContent = error.message || 'Unable to check your account.'; }

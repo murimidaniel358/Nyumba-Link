@@ -40,6 +40,14 @@ export async function mountListingManager(user) {
       <fieldset class="property-facilities"><legend>Facilities</legend><label><input type="checkbox" name="furnished"> Furnished</label><label><input type="checkbox" name="wifi"> Wi-Fi</label><label><input type="checkbox" name="water"> Running water</label><label><input type="checkbox" name="security"> Security</label><label><input type="checkbox" name="bills_included"> Bills included</label></fieldset>
       <div class="property-form-actions"><button class="btn sm" type="submit">Submit for review</button><button class="btn sm btn-decline" id="cancelListing" type="button">Cancel</button><span id="propertyFormStatus" role="status" aria-live="polite"></span></div>
     </form>
+    <section class="dash-section viewing-dashboard-section" id="viewings">
+      <div class="dash-section-head"><div><h2>Viewing requests</h2><p>Review student requests and confirm or decline a viewing time.</p></div><button class="btn sm" id="refreshViewingRequests" type="button">Refresh</button></div>
+      <div id="ownerViewingRequests" class="request-list"><div class="dash-empty">Loading viewing requests…</div></div>
+    </section>
+    <section class="dash-section viewing-dashboard-section" id="ratings">
+      <div class="dash-section-head"><div><h2>Listing ratings <span class="rating-count-label" id="newRatingCount">—</span></h2><p>New ratings from students on your published listings.</p></div><button class="btn sm" id="refreshListingRatings" type="button">Refresh</button></div>
+      <div id="ownerRatingNotifications" class="rating-notifications"><div class="dash-empty">Loading listing ratings…</div></div>
+    </section>
     <div id="ownedListings" class="dash-listings"><div class="dash-empty">Loading your listings…</div></div>`;
 
   const form = root.querySelector('#propertyForm');

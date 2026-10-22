@@ -32,7 +32,7 @@ export function toDisplayListing(row, index = 0) {
     bills: row.bills_included ? 1 : 0,
     status: row.availability,
     conf: parsedDate,
-    adv: row.contact_name || 'Nyumba Link advertiser',
+    adv: row.contact_name || 'MyKejaLink advertiser',
     n: index,
     hue: 200 + (index * 17) % 100,
     rate: 0,
@@ -50,6 +50,23 @@ export function toDisplayListing(row, index = 0) {
   };
 }
 
+async function attachRatingSummaries(listings) {
+  const propertyIds = listings.map((listing) => listing.id).filter(Boolean);
+  if (!propertyIds.length) return;
+  const { data, error } = await supabase.from('property_rating_summary')
+    .select('property_id, average_rating, rating_count')
+    .in('property_id', propertyIds);
+  if (error) return;
+  const summaries = new Map((data || []).map((summary) => [summary.property_id, summary]));
+  listings.forEach((listing) => {
+    const summary = summaries.get(listing.id);
+    listing.rate = Number(summary?.average_rating || 0);
+    listing.rev = Number(summary?.rating_count || 0);
+    listing.r0 = listing.rate;
+    listing.n0 = listing.rev;
+  });
+}
+
 export async function loadPublishedListings(target) {
   const { data, error } = await supabase
     .from('properties')
@@ -58,7 +75,11 @@ export async function loadPublishedListings(target) {
     .order('updated_at', { ascending: false });
 
   if (error) return { error, count: 0 };
-  if (data?.length) target.splice(0, target.length, ...data.map(toDisplayListing));
+  if (data?.length) {
+    const listings = data.map(toDisplayListing);
+    await attachRatingSummaries(listings);
+    target.splice(0, target.length, ...listings);
+  }
   return { error: null, count: data?.length || 0 };
 }
 
@@ -71,5 +92,7 @@ export async function loadPublishedListingById(id) {
     .eq('status', 'published')
     .maybeSingle();
   if (error || !data) return null;
-  return toDisplayListing(data);
+  const listing = toDisplayListing(data);
+  await attachRatingSummaries([listing]);
+  return listing;
 }
