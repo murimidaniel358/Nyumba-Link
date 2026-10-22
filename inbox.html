@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin inbox — Nyumba Link</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="hd"></div>
+  <main class="saved-listings-page">
+    <section class="wrap inbox-wrap">
+      <a class="back" id="inboxBack" href="find.html">← Back to dashboard</a>
+      <div class="dash-heading inbox-heading"><div><p class="eyebrow">ACCOUNT</p><h1>Admin inbox</h1><p>Read review messages and follow the next steps for your applications or listings.</p></div><button id="refreshInbox" class="btn sm" type="button">Refresh messages</button></div>
+      <p id="inboxStatus" class="dash-notice" role="status" aria-live="polite">Loading messages…</p>
+      <div id="inboxMessages" class="request-list"></div>
+    </section>
+  </main>
+  <footer id="ft"></footer><div id="toast"></div>
+  <script src="common.js"></script>
+  <script type="module">
+    import { supabase } from './supabase-client.js';
+    const status = document.getElementById('inboxStatus');
+    const messageList = document.getElementById('inboxMessages');
+    document.getElementById('refreshInbox').addEventListener('click', () => window.location.reload());
+    const make = (tag, className, text) => {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    };
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      status.textContent = sessionError.message || 'Could not check your account.';
+    } else if (!session) {
+      window.location.replace('account.html?mode=login');
+    } else {
+      const userId = session.user.id;
+      const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', userId).single();
+      if (profileError || !profile || !['student', 'landlord', 'agent'].includes(profile.role)) {
+        status.textContent = 'This inbox is for student, landlord, and agent accounts.';
+      } else {
+        const dashboardByRole = { student: 'find.html', landlord: 'landlord-dashboard.html', agent: 'agent-dashboard.html' };
+        document.getElementById('inboxBack').href = dashboardByRole[profile.role];
+        const { data: messages, error } = await supabase.from('admin_messages')
+          .select('id, context_type, context_id, subject, body, created_at, read_at')
+          .eq('recipient_id', userId)
+          .order('created_at', { ascending: false });
+        if (error) {
+          status.textContent = 'The inbox is not connected yet. Run supabase/admin_inbox.sql in the Supabase SQL Editor, then refresh.';
+        } else if (!messages?.length) {
+          status.textContent = 'You have no admin messages.';
+        } else {
+          const applicationIds = [...new Set(messages.filter((message) => message.context_type === 'application').map((message) => message.context_id))];
+          let applications = [];
+          if (applicationIds.length) {
+            const result = await supabase.from('verification_requests').select('id, applicant_role, details').in('id', applicationIds);
+            if (!result.error) applications = result.data || [];
+          }
+          const applicationById = new Map(applications.map((application) => [application.id, application]));
+          const unreadIds = messages.filter((message) => !message.read_at).map((message) => message.id);
+          if (unreadIds.length) {
+            await supabase.from('admin_messages').update({ read_at: new Date().toISOString() }).in('id', unreadIds).eq('recipient_id', userId);
+          }
+          status.textContent = `${messages.length} message${messages.length === 1 ? '' : 's'}.`;
+          messageList.replaceChildren(...messages.map((message) => {
+            const card = make('article', 'inbox-message');
+            const header = make('div', 'request-head');
+            const subject = make('h2', '', message.subject);
+            header.append(subject);
+            const date = make('span', 'request-date', new Date(message.created_at).toLocaleString());
+            header.append(date);
+            card.append(header);
+            card.append(make('p', 'inbox-message-body', message.body));
+            if (message.context_type === 'application') {
+              const application = applicationById.get(message.context_id);
+              if (application && profile.role === 'student') {
+                const form = make('form', 'inbox-reapply-form');
+                const label = make('label', '', `Update your ${application.applicant_role} application details`);
+                const textarea = document.createElement('textarea');
+                textarea.required = true;
+                textarea.maxLength = 4000;
+                textarea.rows = 4;
+                textarea.value = application.details || '';
+                label.append(textarea);
+                const submit = make('button', 'btn sm', 'Update and reapply');
+                submit.type = 'submit';
+                const result = make('p', 'inbox-action-status');
+                result.setAttribute('role', 'status');
+                form.append(label, submit, result);
+                form.addEventListener('submit', async (event) => {
+                  event.preventDefault();
+                  submit.disabled = true;
+                  result.textContent = 'Resubmitting your application…';
+                  const { error: submitError } = await supabase.rpc('resubmit_verification_request', {
+                    p_request_id: message.context_id,
+                    p_details: textarea.value.trim()
+                  });
+                  submit.disabled = false;
+                  if (submitError) {
+                    result.textContent = submitError.message || 'Could not resubmit your application.';
+                  } else {
+                    result.textContent = 'Your updated application has been sent for review.';
+                    textarea.disabled = true;
+                    submit.disabled = true;
+                  }
+                });
+                card.append(form);
+              }
+            } else if (message.context_type === 'listing') {
+              const dashboard = profile.role === 'agent' ? 'agent-dashboard.html#listings' : 'landlord-dashboard.html#listings';
+              const edit = make('a', 'btn sm inbox-edit-link', 'Open my listings to make changes');
+              edit.href = dashboard;
+              card.append(edit);
+            }
+            const actions = make('div', 'inbox-message-actions');
+            const remove = make('button', 'btn sm btn-decline', 'Delete message');
+            remove.type = 'button';
+            remove.addEventListener('click', async () => {
+              if (!window.confirm('Delete this message from your inbox?')) return;
+              remove.disabled = true;
+              const { error: deleteError } = await supabase.from('admin_messages')
+                .delete().eq('id', message.id).eq('recipient_id', userId);
+              if (deleteError) {
+                remove.disabled = false;
+                status.textContent = deleteError.message || 'Could not delete this message.';
+                return;
+              }
+              card.remove();
+              const remaining = messageList.querySelectorAll('.inbox-message').length;
+              status.textContent = remaining ? `${remaining} message${remaining === 1 ? '' : 's'} remaining.` : 'You have no admin messages.';
+            });
+            actions.append(remove);
+            card.append(actions);
+            return card;
+          }));
+        }
+      }
+    }
+  </script>
+</body>
+</html>

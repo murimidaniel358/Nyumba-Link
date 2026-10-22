@@ -44,11 +44,15 @@
   <footer id=ft></footer>
   <div id=toast></div>
   <script src=common.js></script>
-  <script>const f = mountSB(() => go());
+  <script type="module">
+    import { loadPublishedListings } from './public-listings.js';
+    const f = mountSB(() => go());
     const go = () => {
       let r = filt(f); const act = [...new FormData(f)].some(([k, v]) => v && k != 'sort'); if (!act) r = r.filter(p => p.status != 'Fully booked').slice(0, 6);
       $('#ttl').textContent = act ? 'Matching accommodation' : 'Featured accommodation'; $('#ct').textContent = act ? r.length + ' listings found' : ''; $('#feat').innerHTML = L(r, card) || '<p>No matches. Try widening your filters.</p>'
     };
+    const result = await loadPublishedListings(D);
+    if (result.error) $('#ct').textContent = 'Showing sample listings while live listings are unavailable.';
     $('#inst').innerHTML = L(UNI, u => `<a class=cat href="find.html?uni=${encodeURIComponent(u)}"><b>${u}</b><small>${D.filter(p => p.uni == u).length} listings</small></a>`); go()</script>
 </body>
 

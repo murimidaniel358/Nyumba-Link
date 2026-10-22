@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Saved listings — Nyumba Link</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="hd"></div>
+  <main class="saved-listings-page">
+    <section class="wrap">
+      <a class="back" href="find.html">← Back to accommodation</a>
+      <div class="dash-heading saved-listings-heading">
+        <div><p class="eyebrow">STUDENT ACCOUNT</p><h1>Saved listings</h1><p>Keep places you’re interested in here so you can return to them later.</p></div>
+        <a class="btn sm" href="find.html">Find accommodation</a>
+      </div>
+      <p id="savedListingsStatus" class="dash-notice" role="status" aria-live="polite">Loading your saved listings…</p>
+      <div id="savedListingsGrid" class="grid"></div>
+    </section>
+  </main>
+  <footer id="ft"></footer><div id="toast"></div>
+  <script src="common.js"></script>
+  <script type="module">
+    import { supabase } from './supabase-client.js';
+    import { toDisplayListing } from './public-listings.js';
+
+    const status = document.getElementById('savedListingsStatus');
+    const grid = document.getElementById('savedListingsGrid');
+    let studentId = null;
+
+    async function loadSavedListings() {
+      const { data, error } = await supabase
+        .from('saved_listings')
+        .select('property_id, created_at, properties(*)')
+        .eq('student_id', studentId)
+        .order('created_at', { ascending: false });
+      const rows = data || [];
+      const liveListings = rows.filter((row) => row.properties).map((row, index) => toDisplayListing(row.properties, index));
+      const unavailable = rows.filter((row) => !row.properties).map((row) => `<article class="saved-unavailable"><div><span class="pill warn">Unavailable</span><h3>Saved listing is no longer available</h3><p>This property may have expired or been removed.</p></div><button class="save-listing-button" type="button" data-save-listing data-listing-id="${row.property_id}" aria-pressed="true" hidden>Remove saved</button></article>`);
+      let demoIds = [];
+      try { demoIds = JSON.parse(localStorage.getItem(`nl_saved_demo_listings_${studentId}`) || '[]'); } catch { demoIds = []; }
+      const demos = (window.NL_DEMO_LISTINGS || []).filter((listing) => demoIds.includes(listing.id));
+      grid.innerHTML = [...liveListings.map(window.NL_RENDER_LISTING_CARD), ...demos.map(window.NL_RENDER_LISTING_CARD), ...unavailable].join('');
+      window.NL_SYNC_SAVED_LISTINGS?.();
+      status.textContent = error
+        ? `Could not load cloud-saved listings. Run supabase/saved_listings.sql in Supabase, then refresh. ${liveListings.length + demos.length + unavailable.length ? 'Your saved demo listings are shown below.' : ''}`
+        : liveListings.length + demos.length + unavailable.length
+          ? `${liveListings.length + demos.length + unavailable.length} saved listing${liveListings.length + demos.length + unavailable.length === 1 ? '' : 's'}.`
+          : 'You have no saved listings yet. Browse accommodation and select “Save listing” to keep one here.';
+    }
+
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError) {
+      status.textContent = sessionError.message || 'Could not check your account.';
+    } else if (!session) {
+      window.location.replace('account.html?mode=login');
+    } else {
+      const { data: profile, error } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+      if (error || !profile) {
+        status.textContent = 'Could not load your account details.';
+      } else if (profile.role !== 'student') {
+        const destination = { admin: 'admin-dashboard.html', landlord: 'landlord-dashboard.html', agent: 'agent-dashboard.html' }[profile.role] || 'find.html';
+        window.location.replace(destination);
+      } else {
+        studentId = session.user.id;
+        await loadSavedListings();
+        window.addEventListener('nyumba:saved-listings-changed', loadSavedListings);
+      }
+    }
+  </script>
+</body>
+</html>

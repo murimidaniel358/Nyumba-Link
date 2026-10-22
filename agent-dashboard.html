@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Dashboard — Nyumba Link</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="hd"></div>
+  <main class="dash-page">
+    <aside class="dash-nav" aria-label="Agent dashboard navigation">
+      <p class="dash-nav-label">WORKSPACE</p>
+      <a class="active" href="#overview">Overview</a>
+      <a href="#listings">My listings</a>
+      <a href="list.html">Listing guide</a>
+    </aside>
+    <section class="dash-content" id="overview">
+      <button class="dash-back" type="button" data-home-nav aria-label="Go to home page" title="Home"><svg class="dash-home-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 10.5 8.5-7 8.5 7M5.5 9v11h13V9M9.5 20v-6h5v6"/></svg></button>
+      <button class="section-back" id="sectionBack" type="button" disabled>← Previous section</button>
+      <div class="dash-heading">
+        <div><p class="eyebrow">AGENT WORKSPACE</p><h1>Welcome, <span id="dashboardName">Agent</span></h1><p>Manage the properties you advertise and keep availability up to date.</p></div>
+        <a class="btn sm" href="list.html">How to list a property</a>
+      </div>
+      <p id="dashboardStatus" class="dash-notice" role="status" aria-live="polite">Checking your account…</p>
+      <div class="dash-stats" aria-label="Dashboard summary">
+        <article class="dash-stat"><span>Active listings</span><strong id="activeListingCount">—</strong><small>Approved listings</small></article>
+        <article class="dash-stat"><span>Needs attention</span><strong id="attentionListingCount">—</strong><small>Pending review or changes needed</small></article>
+        <article class="dash-stat"><span>Account status</span><strong class="verified-label">Verified</strong><small>Your advertiser access is active</small></article>
+      </div>
+      <section class="dash-section" id="listings">
+        <div class="dash-section-head"><div><h2>My listings</h2><p>Add properties, update availability and track review status.</p></div></div>
+        <div id="listingManager"></div>
+      </section>
+      <section class="dash-section"><h2>Keep your listings useful</h2><div class="dash-tips"><article><b>Confirm availability</b><p>Update availability whenever rooms are taken or become free.</p></article><article><b>Keep details accurate</b><p>Make sure rent, deposit, location and facilities are current.</p></article><article><b>Respond to enquiries</b><p>Reply promptly so students can make informed decisions.</p></article></div></section>
+    </section>
+  </main>
+  <footer id="ft"></footer><div id="toast"></div>
+  <script src="common.js"></script>
+  <script type="module">
+    import { supabase } from './supabase-client.js';
+    import { mountListingManager } from './dashboard-listings.js';
+    const status = document.getElementById('dashboardStatus');
+    const sectionBack = document.getElementById('sectionBack');
+    const sectionHistory = [];
+    let currentSection = ['overview', 'listings'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
+    function showDashboardSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      if (!section) return;
+      section.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      section.classList.remove('dashboard-section-enter');
+      requestAnimationFrame(() => section.classList.add('dashboard-section-enter'));
+      setTimeout(() => section.classList.remove('dashboard-section-enter'), 420);
+    }
+    document.querySelectorAll('.dash-nav a[href^="#"]').forEach((link) => {
+      link.addEventListener('click', (event) => {
+        const nextSection = link.getAttribute('href').slice(1);
+        if (!document.getElementById(nextSection) || nextSection === currentSection) return;
+        event.preventDefault();
+        sectionHistory.push(currentSection);
+        currentSection = nextSection;
+        history.replaceState(null, '', `#${nextSection}`);
+        showDashboardSection(nextSection);
+        document.querySelectorAll('.dash-nav a[href^="#"]').forEach((item) => item.classList.toggle('active', item === link));
+        sectionBack.disabled = sectionHistory.length === 0;
+      });
+    });
+    sectionBack.addEventListener('click', () => {
+      const previousSection = sectionHistory.pop();
+      if (!previousSection) return;
+      currentSection = previousSection;
+      history.replaceState(null, '', `#${previousSection}`);
+      showDashboardSection(previousSection);
+      document.querySelectorAll('.dash-nav a[href^="#"]').forEach((item) => item.classList.toggle('active', item.getAttribute('href') === `#${previousSection}`));
+      sectionBack.disabled = sectionHistory.length === 0;
+    });
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session) { window.location.replace('account.html?mode=login'); }
+      else {
+        const { data: profile, error } = await supabase.from('profiles').select('role, verification_status').eq('id', session.user.id).single();
+        if (error || !profile) throw new Error('We could not load your account profile.');
+        if (profile.role !== 'agent') {
+          const destination = { admin: 'admin-dashboard.html', landlord: 'landlord-dashboard.html', agent: 'agent-dashboard.html', student: 'find.html' }[profile.role] || 'account.html';
+          window.location.replace(destination);
+        }
+        else if (profile.verification_status !== 'verified') { status.textContent = 'Your agent account is awaiting verification.'; window.location.replace('account.html'); }
+        else {
+          document.getElementById('dashboardName').textContent = session.user.user_metadata?.full_name || session.user.email || 'Agent';
+          status.textContent = 'Your agent account is verified and ready.';
+          await mountListingManager(session.user);
+        }
+      }
+    } catch (error) { status.textContent = error.message || 'Unable to check your account.'; }
+  </script>
+</body>
+</html>

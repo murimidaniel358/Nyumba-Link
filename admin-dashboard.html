@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin Dashboard — Nyumba Link</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="hd"></div>
+  <main class="dash-page admin-page">
+    <aside class="dash-nav" aria-label="Admin dashboard navigation">
+      <p class="dash-nav-label">ADMIN</p>
+      <a class="active" href="#overview">Overview</a>
+      <a href="#requests">Verification requests</a>
+      <a href="#landlords">Landlords</a>
+      <a href="#agents">Agents</a>
+      <a href="#students">Students</a>
+      <a href="#universities">Institutions</a>
+      <a href="#listings">Listing reviews</a>
+      <a href="#payments" hidden>Listing payments</a>
+      <a href="#declined">Suspended reviews</a>
+      <a href="#support">Support</a>
+    </aside>
+    <section class="dash-content" id="overview">
+      <button class="dash-back" type="button" data-home-nav aria-label="Go to home page" title="Home"><svg class="dash-home-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 10.5 8.5-7 8.5 7M5.5 9v11h13V9M9.5 20v-6h5v6"/></svg></button>
+      <button class="section-back" id="sectionBack" type="button" disabled>← Previous section</button>
+      <div class="dash-heading">
+        <div><p class="eyebrow">ADMIN WORKSPACE</p><h1>Welcome, <span id="adminName">Admin</span></h1><p>Review advertiser applications and keep the platform trustworthy.</p></div>
+      </div>
+      <p id="adminStatus" class="dash-notice" role="status" aria-live="polite">Checking administrator access…</p>
+      <div class="dash-stats admin-stats" aria-label="Admin summary">
+        <button class="dash-stat admin-stat-link" id="advertiserReviewsShortcut" type="button" aria-controls="requests"><span>Pending advertiser reviews</span><strong id="pendingCount">—</strong><small>Click to review landlord and agent applications</small></button>
+        <article class="dash-stat"><span>Review focus</span><strong class="admin-focus">Verify</strong><small>Check each application before approval</small></article>
+        <button class="dash-stat admin-stat-link" id="listingRequestsShortcut" type="button" aria-controls="listings"><span>Listing requests</span><strong id="pendingListingStatCount">—</strong><small>Click to review submitted listings</small></button>
+      </div>
+      <div class="admin-user-search">
+        <label for="accountSearch">Search user accounts</label>
+        <input id="accountSearch" type="search" autocomplete="off" placeholder="Name, email, phone or account ID">
+        <p id="accountSearchStatus" role="status" aria-live="polite">Search landlords, agents and students.</p>
+        <div id="accountSearchResults" class="account-search-results" aria-label="Matching user accounts" hidden></div>
+      </div>
+      <section class="dash-section" id="requests">
+        <div class="dash-section-head"><div><h2>Advertiser verification requests</h2><p>Read each applicant’s details, then approve or suspend the request.</p></div><button class="btn sm" id="refreshRequests" type="button">Refresh</button></div>
+        <div class="admin-guidance"><b>Review checklist</b><span>Confirm the applicant’s relationship to the property or agency and follow up if any details are unclear.</span></div>
+        <div id="requestList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading requests…</p></div></div>
+      </section>
+      <section class="dash-section" id="landlords">
+        <div class="dash-section-head"><div><h2>Landlords</h2><p>Approved landlord accounts on Nyumba Link.</p></div><button class="btn sm" data-refresh-users="landlord" type="button">Refresh</button></div>
+        <p class="admin-listing-count">Landlords: <strong id="landlordCount">—</strong></p>
+        <div id="landlordList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading landlords…</p></div></div>
+      </section>
+      <section class="dash-section" id="agents">
+        <div class="dash-section-head"><div><h2>Agents</h2><p>Approved real estate agent accounts on Nyumba Link.</p></div><button class="btn sm" data-refresh-users="agent" type="button">Refresh</button></div>
+        <p class="admin-listing-count">Agents: <strong id="agentCount">—</strong></p>
+        <div id="agentList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading agents…</p></div></div>
+      </section>
+      <section class="dash-section" id="students">
+        <div class="dash-section-head"><div><h2>Students</h2><p>Student accounts registered on Nyumba Link.</p></div><button class="btn sm" data-refresh-users="student" type="button">Refresh</button></div>
+        <p class="admin-listing-count">Students: <strong id="studentCount">—</strong></p>
+        <div id="studentList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading students…</p></div></div>
+      </section>
+      <section class="dash-section" id="universities">
+        <div class="dash-section-head"><div><h2>Universities, colleges &amp; TVETs</h2><p>Manage the institutions students can select in the accommodation filters.</p></div><button class="btn sm" id="refreshUniversities" type="button">Refresh</button></div>
+        <form id="universityForm" class="institution-form">
+          <label for="universityName">Institution name</label>
+          <div class="institution-form-row"><input id="universityName" name="name" type="text" maxlength="120" placeholder="e.g. Moi University, a college or TVET" required><button class="btn sm" id="addUniversityButton" type="submit">Add institution</button></div>
+          <p id="universityStatus" role="status" aria-live="polite"></p>
+        </form>
+        <p class="admin-listing-count">Approved institutions: <strong id="universityCount">—</strong></p>
+        <div class="institution-remove-row">
+          <details class="institution-dropdown">
+            <summary id="approvedInstitutionSummary">Approved institutions</summary>
+            <p class="institution-dropdown-help">Each approved institution is available to students. Remove it here to hide it from their filters.</p>
+            <div id="approvedInstitutionList" class="institution-admin-list" aria-live="polite"><div class="dash-empty">Loading approved institutions…</div></div>
+          </details>
+        </div>
+      </section>
+      <section class="dash-section" id="listings">
+        <div class="dash-section-head"><div><h2>Listing reviews</h2><p>Approve accurate listings to make them visible to students.</p></div><button class="btn sm" id="refreshListings" type="button">Refresh</button></div>
+        <p class="admin-listing-count">Pending listings: <strong id="pendingListingCount">—</strong></p>
+        <div id="listingReviewList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading listing submissions…</p></div></div>
+      </section>
+      <section class="dash-section" id="payments" hidden>
+        <div class="dash-section-head"><div><h2>Listing payments</h2><p>Payment processing is paused while listings are being tested.</p></div><button class="btn sm" id="refreshListingPayments" type="button">Refresh</button></div>
+        <p class="admin-listing-count">Pending payment codes: <strong id="pendingPaymentCount">—</strong></p>
+        <div id="listingPaymentQueue" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading payment codes…</p></div></div>
+      </section>
+      <section class="dash-section" id="declined">
+        <div class="dash-section-head"><div><h2>Suspended reviews</h2><p>Keep track of suspended advertiser applications and property listings.</p></div><button class="btn sm" id="refreshDeclined" type="button">Refresh</button></div>
+        <div class="admin-guidance"><b>Suspended landlord applications</b><span>Applicants and the details they submitted.</span></div>
+        <p class="admin-listing-count">Landlord applications: <strong id="declinedLandlordCount">—</strong></p>
+        <div id="declinedLandlordList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading suspended landlord applications…</p></div></div>
+        <div class="admin-guidance"><b>Suspended agent applications</b><span>Applicants and the details they submitted.</span></div>
+        <p class="admin-listing-count">Agent applications: <strong id="declinedAgentCount">—</strong></p>
+        <div id="declinedAgentList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading suspended agent applications…</p></div></div>
+        <div class="admin-guidance"><b>Suspended property listings</b><span>Each suspended listing is shown with its advertiser account and review note.</span></div>
+        <p class="admin-listing-count">Property listings: <strong id="declinedPropertyCount">—</strong></p>
+        <div id="declinedPropertyList" class="request-list" aria-live="polite"><div class="dash-empty"><p>Loading suspended property listings…</p></div></div>
+      </section>
+      <section class="dash-section" id="support">
+        <h2>Admin support</h2>
+        <div class="admin-support-card"><div><b>Need help with an application or account?</b><p>Contact the Nyumba Link support team. You can return to this dashboard section from the support page.</p></div><a class="btn sm" href="contact.html?from=admin-dashboard&amp;section=support">Contact support</a></div>
+      </section>
+    </section>
+  </main>
+  <footer id="ft"></footer><div id="toast"></div>
+  <script src="common.js"></script>
+  <script type="module">
+    import { supabase } from './supabase-client.js';
+
+    // TODO: Re-enable listing payments before the next GitHub push.
+    const listingPaymentsEnabledForTesting = false;
+
+    const status = document.getElementById('adminStatus');
+    const sectionBack = document.getElementById('sectionBack');
+    const sectionHistory = [];
+    const dashboardSections = ['overview', 'requests', 'landlords', 'agents', 'students', 'universities', 'listings', 'payments', 'declined', 'support'];
+    let currentSection = dashboardSections.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'overview';
+    function showDashboardSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      if (!section) return;
+      section.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      section.classList.remove('dashboard-section-enter');
+      requestAnimationFrame(() => section.classList.add('dashboard-section-enter'));
+      setTimeout(() => section.classList.remove('dashboard-section-enter'), 420);
+    }
+    document.querySelectorAll('.dash-nav a[href^="#"]').forEach((link) => {
+      link.addEventListener('click', (event) => {
+        const nextSection = link.getAttribute('href').slice(1);
+        if (!document.getElementById(nextSection) || nextSection === currentSection) return;
+        event.preventDefault();
+        sectionHistory.push(currentSection);
+        currentSection = nextSection;
+        history.replaceState(null, '', `#${nextSection}`);
+        showDashboardSection(nextSection);
+        document.querySelectorAll('.dash-nav a[href^="#"]').forEach((item) => item.classList.toggle('active', item === link));
+        sectionBack.disabled = sectionHistory.length === 0;
+      });
+    });
+    sectionBack.addEventListener('click', () => {
+      const previousSection = sectionHistory.pop();
+      if (!previousSection) return;
+      currentSection = previousSection;
+      history.replaceState(null, '', `#${previousSection}`);
+      showDashboardSection(previousSection);
+      document.querySelectorAll('.dash-nav a[href^="#"]').forEach((item) => item.classList.toggle('active', item.getAttribute('href') === `#${previousSection}`));
+      sectionBack.disabled = sectionHistory.length === 0;
+    });
+    const list = document.getElementById('requestList');
+    const count = document.getElementById('pendingCount');
+    let adminReady = false;
+    let adminUserId = null;
+    let busy = false;
+
+    function showStatus(message, isError = false) {
+      status.textContent = message;
+      status.classList.toggle('error', isError);
+    }
+
+    function node(tag, className, value) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (value !== undefined) element.textContent = value;
+      return element;
+    }
+    function addRejectionComposer(card, sendLabel, onSend) {
+      card.querySelector('.rejection-composer')?.remove();
+      const form = node('form', 'rejection-composer');
+      const label = node('label', '', 'Message to the applicant or advertiser');
+      const textarea = document.createElement('textarea');
+      textarea.required = true;
+      textarea.maxLength = 2000;
+      textarea.rows = 3;
+      textarea.placeholder = 'Explain what needs to be corrected before they reapply.';
+      label.append(textarea);
+      const actions = node('div', 'request-actions');
+      const send = node('button', 'btn sm btn-decline', sendLabel);
+      const cancel = node('button', 'mini-link', 'Cancel');
+      send.type = cancel.type = 'button';
+      send.addEventListener('click', async () => {
+        const message = textarea.value.trim();
+        if (!message) { textarea.focus(); return; }
+        send.disabled = cancel.disabled = true;
+        await onSend(message, send, cancel);
+        send.disabled = cancel.disabled = false;
+      });
+      cancel.addEventListener('click', () => form.remove());
+      actions.append(send, cancel);
+      form.append(label, actions);
+      card.append(form);
+      textarea.focus();
+    }
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+    const propertyTypeName = (value) => ({ bedsitter: 'Bedsitter', single_room: 'Single room', studio_apartment: 'Studio apartment', one_bedroom: 'One bedroom', shared_room: 'Shared room', hostel: 'Hostel', other: 'Other' }[value] || value || 'Property');
+
+    function displayRequests(requests) {
+      list.replaceChildren();
+      count.textContent = String(requests.length);
+      if (!requests.length) {
+        const empty = node('div', 'dash-empty');
+        empty.append(node('span', 'dash-empty-icon', '✓'));
+        empty.append(node('h3', '', 'You’re all caught up'));
+        empty.append(node('p', '', 'There are no advertiser applications waiting for review.'));
+        list.append(empty);
+        return;
+      }
+
+      requests.forEach((request) => {
+        const card = node('article', 'request-card');
+        const header = node('div', 'request-head');
+        const heading = node('div', '');
+        heading.append(node('span', 'request-role', request.applicant_role === 'agent' ? 'AGENT APPLICATION' : 'LANDLORD APPLICATION'));
+        heading.append(node('h3', '', request.applicant_role === 'agent' ? 'Real estate agent' : 'Landlord'));
+        header.append(heading);
+        header.append(node('span', 'request-date', request.created_at ? new Date(request.created_at).toLocaleDateString() : 'Date not provided'));
+        card.append(header);
+        card.append(node('p', 'request-details', request.details || 'No application details were provided.'));
+        card.append(node('p', 'request-user', `Applicant account: ${request.user_id || 'Unknown'}`));
+        const actions = node('div', 'request-actions');
+        const approve = node('button', 'btn sm', 'Approve advertiser');
+        approve.type = 'button';
+        approve.addEventListener('click', () => review(request, 'approve', approve, decline));
+        const decline = node('button', 'btn sm btn-decline', 'Suspend');
+        decline.type = 'button';
+        decline.addEventListener('click', () => addRejectionComposer(card, 'Send message and suspend', (message) => review(request, 'decline', approve, decline, message)));
+        actions.append(approve, decline);
+        card.append(actions);
+        list.append(card);
+      });
+    }
+
+    async function loadRequests() {
+      if (!adminReady) return;
+      list.replaceChildren(node('div', 'dash-empty', 'Loading verification requests…'));
+      const { data, error } = await supabase
+        .from('verification_requests')
+        .select('id, user_id, applicant_role, details, status, created_at')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true });
+      if (error) {
+        count.textContent = '—';
+        list.replaceChildren(node('div', 'dash-empty', 'Could not load requests. Check the verification_requests table access policy and try again.'));
+        showStatus('Your admin access is active, but verification requests could not be loaded.', true);
+        return;
+      }
+      displayRequests(data || []);
+      showStatus('Administrator access confirmed. Review pending advertiser applications below.');
+    }
+
+    const accountSections = {
+      landlord: { list: document.getElementById('landlordList'), count: document.getElementById('landlordCount'), label: 'landlords' },
+      agent: { list: document.getElementById('agentList'), count: document.getElementById('agentCount'), label: 'agents' },
+      student: { list: document.getElementById('studentList'), count: document.getElementById('studentCount'), label: 'students' }
+    };
+    const accountProfiles = new Map();
+
+    function applyAccountSearch() {
+      const query = document.getElementById('accountSearch').value.trim().toLocaleLowerCase();
+      const totals = { landlord: 0, agent: 0, student: 0 };
+      const matchingRows = [];
+      Object.entries(accountSections).forEach(([role, target]) => {
+        const rows = target.list.querySelectorAll('.account-table tbody tr');
+        let matches = 0;
+        rows.forEach((row) => {
+          const visible = !query || row.textContent.toLocaleLowerCase().includes(query);
+          row.hidden = !visible;
+          if (visible) {
+            matches += 1;
+            if (query) matchingRows.push({ role, row, profile: accountProfiles.get(row.dataset.accountId) });
+          }
+        });
+        totals[role] = matches;
+        let empty = target.list.querySelector('[data-account-search-empty]');
+        if (query && rows.length && matches === 0) {
+          if (!empty) {
+            empty = node('div', 'dash-empty account-search-empty', 'No matching accounts in this section.');
+            empty.dataset.accountSearchEmpty = 'true';
+            target.list.append(empty);
+          }
+          empty.hidden = false;
+        } else if (empty) {
+          empty.remove();
+        }
+      });
+      const status = document.getElementById('accountSearchStatus');
+      const total = totals.landlord + totals.agent + totals.student;
+      status.textContent = query
+        ? `${total} matching account${total === 1 ? '' : 's'} · Landlords: ${totals.landlord} · Agents: ${totals.agent} · Students: ${totals.student}`
+        : 'Search landlords, agents and students.';
+      const resultList = document.getElementById('accountSearchResults');
+      resultList.replaceChildren();
+      resultList.hidden = !query || matchingRows.length === 0;
+      matchingRows.forEach(({ role, row, profile }) => {
+        const result = node('article', 'account-search-result-card');
+        const jump = node('button', 'account-search-result');
+        jump.type = 'button';
+        jump.dataset.accountRole = role;
+        jump.dataset.accountId = row.dataset.accountId;
+        jump.append(node('strong', '', row.cells[0]?.textContent || 'Name not provided'));
+        jump.append(node('span', '', `${role[0].toUpperCase()}${role.slice(1)} · ${row.cells[1]?.textContent || 'No email'} · ${row.cells[2]?.textContent || 'No phone'} — click to go to table row`));
+        result.append(jump);
+        if (profile) {
+          const details = node('dl', 'account-search-details');
+          Object.entries(profile).forEach(([key, value]) => {
+            const label = node('dt', '', key.replace(/_/g, ' '));
+            const displayValue = value === null || value === undefined || value === ''
+              ? '—'
+              : typeof value === 'object' ? JSON.stringify(value) : String(value);
+            details.append(label, node('dd', '', displayValue));
+          });
+          result.append(details);
+        }
+        const deleteButton = node('button', 'btn sm btn-decline account-delete-button', 'Delete account');
+        deleteButton.type = 'button';
+        deleteButton.setAttribute('aria-label', `Delete account for ${row.cells[0]?.textContent || 'this user'}`);
+        deleteButton.dataset.accountRole = role;
+        deleteButton.dataset.accountId = row.dataset.accountId;
+        deleteButton.dataset.accountName = row.cells[0]?.textContent || 'this user';
+        deleteButton.dataset.accountEmail = row.cells[1]?.textContent || '';
+        result.append(deleteButton);
+        resultList.append(result);
+      });
+    }
+
+    async function loadAccounts(role) {
+      if (!adminReady || !accountSections[role]) return;
+      const target = accountSections[role];
+      target.list.replaceChildren(node('div', 'dash-empty', `Loading ${target.label}…`));
+      let query = supabase.from('profiles').select('*').eq('role', role);
+      if (role === 'landlord' || role === 'agent') query = query.eq('verification_status', 'verified');
+      const { data, error } = await query;
+      if (error) {
+        target.count.textContent = '—';
+        target.list.replaceChildren(node('div', 'dash-empty', `Could not load ${target.label}. Check the administrator profile access policy and try again.`));
+        return;
+      }
+      const profiles = data || [];
+      accountProfiles.forEach((profile, id) => {
+        if (profile.role === role) accountProfiles.delete(id);
+      });
+      profiles.forEach((profile) => accountProfiles.set(profile.id, profile));
+      target.count.textContent = String(profiles.length);
+      if (!profiles.length) {
+        target.list.replaceChildren(node('div', 'dash-empty', `No ${target.label} registered yet.`));
+        return;
+      }
+      profiles.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
+      const wrap = node('div', 'account-table-wrap');
+      const table = node('table', 'account-table');
+      const head = node('thead', '');
+      const headerRow = node('tr', '');
+      ['Name', 'Email', 'Phone', 'Status', 'Joined', 'Account ID'].forEach((label) => headerRow.append(node('th', '', label)));
+      head.append(headerRow);
+      const body = node('tbody', '');
+      profiles.forEach((profile) => {
+        const row = node('tr', '');
+        row.dataset.accountId = profile.id || '';
+        row.tabIndex = -1;
+        const name = profile.full_name || profile.name || profile.display_name || 'Name not provided';
+        const phone = profile.phone || profile.phone_number || '—';
+        const statusLabel = role === 'student' ? 'Student' : profile.verification_status || 'Pending';
+        [
+          name,
+          profile.email || '—',
+          phone,
+          statusLabel,
+          profile.created_at ? new Date(profile.created_at).toLocaleDateString() : '—',
+          profile.id || '—'
+        ].forEach((value, index) => {
+          const cell = node(index === 0 ? 'th' : 'td', index === 0 ? 'account-name' : '');
+          if (index === 0) cell.scope = 'row';
+          cell.textContent = value;
+          row.append(cell);
+        });
+        body.append(row);
+      });
+      table.append(head, body);
+      wrap.append(table);
+      target.list.replaceChildren(wrap);
+      applyAccountSearch();
+    }
+
+    async function loadAllAccounts() {
+      await Promise.all(Object.keys(accountSections).map(loadAccounts));
+      applyAccountSearch();
+    }
+
+    async function loadUniversities() {
+      if (!adminReady) return;
+      const institutionList = document.getElementById('approvedInstitutionList');
+      const institutionSummary = document.getElementById('approvedInstitutionSummary');
+      institutionList.replaceChildren(node('div', 'dash-empty', 'Loading approved institutions…'));
+      const { data, error } = await supabase.from('universities').select('id, name, active, created_at').order('name');
+      if (error) {
+        document.getElementById('universityCount').textContent = '—';
+        institutionSummary.textContent = 'Approved institutions · unavailable';
+        institutionList.replaceChildren(node('div', 'dash-empty', 'Could not load approved institutions.'));
+        document.getElementById('universityStatus').textContent = 'Could not load the institution list. Apply supabase/universities.sql, then refresh this section.';
+        return;
+      }
+      const rows = (data || []).filter((row) => row.active).sort((a, b) => a.name.localeCompare(b.name));
+      document.getElementById('universityCount').textContent = String(rows.length);
+      institutionSummary.textContent = `Approved institutions · ${rows.length}`;
+      if (!rows.length) {
+        institutionList.replaceChildren(node('div', 'dash-empty', 'No approved institutions yet. Add one above to make it available to students.'));
+        return;
+      }
+      institutionList.replaceChildren(...rows.map((row) => {
+        const item = node('div', 'institution-admin-row');
+        const name = node('strong', 'institution-admin-name', row.name);
+        const badge = node('span', 'pill ok', 'Approved');
+        const remove = node('button', 'btn sm btn-decline', 'Remove');
+        remove.type = 'button';
+        remove.dataset.removeInstitution = row.id;
+        remove.dataset.institutionName = row.name;
+        remove.setAttribute('aria-label', `Remove ${row.name} from student filters`);
+        item.append(name, badge, remove);
+        return item;
+      }));
+    }
+
+    document.getElementById('universityForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const input = document.getElementById('universityName');
+      const name = input.value.trim().replace(/\s+/g, ' ');
+      const message = document.getElementById('universityStatus');
+      const button = document.getElementById('addUniversityButton');
+      if (!name) return;
+      button.disabled = true;
+      message.textContent = 'Adding institution…';
+      const { error } = await supabase.from('universities').insert({ name, created_by: adminUserId });
+      button.disabled = false;
+      if (error) {
+        if (error.code === '23505') {
+          const { data: existing } = await supabase
+            .from('universities')
+            .select('id, active')
+            .eq('name', name)
+            .maybeSingle();
+          if (existing && !existing.active) {
+            const { error: restoreError } = await supabase
+              .from('universities')
+              .update({ active: true })
+              .eq('id', existing.id);
+            if (!restoreError) {
+              input.value = '';
+              message.textContent = `${name} has been restored to the student filters.`;
+              await loadUniversities();
+              return;
+            }
+          }
+        }
+        message.textContent = error.code === '23505' ? 'That institution is already on the list.' : error.message;
+        return;
+      }
+      input.value = '';
+      message.textContent = `${name} has been added and will appear in the filters.`;
+      await loadUniversities();
+    });
+
+    document.getElementById('approvedInstitutionList').addEventListener('click', async (event) => {
+      const button = event.target.closest('[data-remove-institution]');
+      if (!button) return;
+      const selectedId = button.dataset.removeInstitution;
+      const message = document.getElementById('universityStatus');
+      const institutionName = button.dataset.institutionName || 'Institution';
+      button.disabled = true;
+      message.textContent = `Removing ${institutionName} from the filters…`;
+      const { error } = await supabase
+        .from('universities')
+        .update({ active: false })
+        .eq('id', selectedId);
+      if (error) {
+        message.textContent = `Could not remove this institution: ${error.message}`;
+        button.disabled = false;
+        return;
+      }
+      message.textContent = `${institutionName} has been removed from the student filters.`;
+      await loadUniversities();
+    });
+
+    async function loadDeclinedReviews() {
+      if (!adminReady) return;
+      const landlordList = document.getElementById('declinedLandlordList');
+      const agentList = document.getElementById('declinedAgentList');
+      const propertyList = document.getElementById('declinedPropertyList');
+      [landlordList, agentList, propertyList].forEach((target) => target.replaceChildren(node('div', 'dash-empty', 'Loading suspended reviews…')));
+      const [requestResult, propertyResult] = await Promise.all([
+        supabase.from('verification_requests').select('id, user_id, applicant_role, details, review_note, status, created_at').eq('status', 'rejected').order('created_at', { ascending: false }),
+        supabase.from('properties').select('*').eq('status', 'rejected').order('created_at', { ascending: false })
+      ]);
+      if (requestResult.error) {
+        ['declinedLandlordCount', 'declinedAgentCount'].forEach((id) => { document.getElementById(id).textContent = '—'; });
+        [landlordList, agentList].forEach((target) => target.replaceChildren(node('div', 'dash-empty', 'Could not load suspended applications. Check the verification request access policy.')));
+      }
+      if (propertyResult.error) {
+        document.getElementById('declinedPropertyCount').textContent = '—';
+        propertyList.replaceChildren(node('div', 'dash-empty', 'Could not load suspended properties. Check the properties access policy.'));
+      }
+
+      const rejectedRequests = requestResult.data || [];
+      const rejectedProperties = propertyResult.data || [];
+      const profileIds = [...new Set([...rejectedRequests.map((item) => item.user_id), ...rejectedProperties.map((item) => item.owner_id)].filter(Boolean))];
+      let profiles = [];
+      if (profileIds.length) {
+        const { data, error } = await supabase.from('profiles').select('*').in('id', profileIds);
+        if (!error) profiles = data || [];
+      }
+      const profileById = new Map(profiles.map((profile) => [profile.id, profile]));
+      const requesterName = (id) => {
+        const profile = profileById.get(id);
+        return profile?.full_name || profile?.name || profile?.display_name || profile?.email || `Account ID: ${id || 'Unknown'}`;
+      };
+      const drawApplications = (role, target, countId) => {
+        const items = rejectedRequests.filter((request) => request.applicant_role === role);
+        if (requestResult.error) return;
+        document.getElementById(countId).textContent = String(items.length);
+        if (!items.length) {
+          target.replaceChildren(node('div', 'dash-empty', `No suspended ${role} applications.`));
+          return;
+        }
+        target.replaceChildren(...items.map((request) => {
+          const card = node('article', 'request-card');
+          const header = node('div', 'request-head');
+          const identity = node('div', '');
+          identity.append(node('span', 'request-role', `${role.toUpperCase()} APPLICATION`));
+          identity.append(node('h3', '', requesterName(request.user_id)));
+          header.append(identity);
+          header.append(node('span', 'request-date', request.created_at ? `Submitted ${new Date(request.created_at).toLocaleDateString()}` : 'Suspended'));
+          card.append(header);
+          card.append(node('p', 'request-details', request.details || 'No application details were provided.'));
+          if (request.review_note) card.append(node('p', 'request-review-note', `Message sent: ${request.review_note}`));
+          const profile = profileById.get(request.user_id);
+          if (profile?.email) card.append(node('p', 'request-user', `Email: ${profile.email}`));
+          if (profile?.phone || profile?.phone_number) card.append(node('p', 'request-user', `Phone: ${profile.phone || profile.phone_number}`));
+          const actions = node('div', 'request-actions');
+          const remove = node('button', 'btn sm btn-decline', 'Delete suspended request');
+          remove.type = 'button';
+          remove.dataset.deleteDeclined = request.id;
+          remove.dataset.declinedType = role;
+          remove.addEventListener('click', () => deleteDeclinedReview(remove));
+          actions.append(remove);
+          card.append(actions);
+          return card;
+        }));
+      };
+      drawApplications('landlord', landlordList, 'declinedLandlordCount');
+      drawApplications('agent', agentList, 'declinedAgentCount');
+      if (propertyResult.error) return;
+      document.getElementById('declinedPropertyCount').textContent = String(rejectedProperties.length);
+      if (!rejectedProperties.length) {
+        propertyList.replaceChildren(node('div', 'dash-empty', 'No suspended property listings.'));
+        return;
+      }
+      propertyList.replaceChildren(...rejectedProperties.map((property) => {
+        const card = node('article', 'request-card');
+        const header = node('div', 'request-head');
+        const identity = node('div', '');
+        identity.append(node('span', 'request-role', propertyTypeName(property.property_type)));
+        identity.append(node('h3', '', property.title || 'Untitled property'));
+        header.append(identity);
+        header.append(node('span', 'request-date', property.created_at ? `Submitted ${new Date(property.created_at).toLocaleDateString()}` : 'Suspended listing'));
+        card.append(header);
+        card.append(node('p', 'request-details', `${property.location || 'Location not provided'} · ${property.institution || 'Institution not provided'} · KSh ${Number(property.monthly_rent || 0).toLocaleString()} per month`));
+        card.append(node('p', 'request-user', `Requester: ${requesterName(property.owner_id)}`));
+        const owner = profileById.get(property.owner_id);
+        if (owner?.email) card.append(node('p', 'request-user', `Email: ${owner.email}`));
+        if (owner?.phone || owner?.phone_number) card.append(node('p', 'request-user', `Phone: ${owner.phone || owner.phone_number}`));
+        if (property.moderation_note) card.append(node('p', 'request-details', `Review note: ${property.moderation_note}`));
+        const actions = node('div', 'request-actions');
+        const remove = node('button', 'btn sm btn-decline', 'Delete suspended listing');
+        remove.type = 'button';
+        remove.dataset.deleteDeclined = property.id;
+        remove.dataset.declinedType = 'property';
+        remove.addEventListener('click', () => deleteDeclinedReview(remove));
+        actions.append(remove);
+        card.append(actions);
+        return card;
+      }));
+    }
+
+    async function deleteDeclinedReview(button) {
+      const requestType = button.dataset.declinedType;
+      const typeName = requestType === 'property' ? 'suspended property listing' : `suspended ${requestType} application`;
+      if (!confirm(`Delete this ${typeName} permanently? The account itself will not be deleted.`)) return;
+      button.disabled = true;
+      let data, error;
+      try {
+        ({ data, error } = await supabase.rpc('delete_declined_review', {
+          p_request_id: button.dataset.deleteDeclined,
+          p_request_type: requestType
+        }));
+      } catch (requestError) {
+        button.disabled = false;
+        showStatus(requestError.message || `Could not delete the ${typeName}.`, true);
+        return;
+      }
+      if (error) {
+        button.disabled = false;
+        showStatus(error.message || `Could not delete the ${typeName}.`, true);
+        return;
+      }
+      if (!data) {
+        showStatus('This suspended record was already removed or is no longer suspended.', true);
+        await loadDeclinedReviews();
+        return;
+      }
+      showStatus(`The ${typeName} was deleted.`);
+      await loadDeclinedReviews();
+    }
+
+    async function loadListingReviews() {
+      if (!adminReady) return;
+      const target = document.getElementById('listingReviewList');
+      target.replaceChildren(node('div', 'dash-empty', 'Loading listing submissions…'));
+      const { data, error } = await supabase.from('properties').select('*').eq('status', 'pending').order('created_at', { ascending: true });
+      if (error) {
+        document.getElementById('pendingListingCount').textContent = '—';
+        document.getElementById('pendingListingStatCount').textContent = '—';
+        target.replaceChildren(node('div', 'dash-empty', 'Listing reviews are unavailable until the properties schema and admin access policies are applied.'));
+        return;
+      }
+      const rows = data || [];
+      document.getElementById('pendingListingCount').textContent = String(rows.length);
+      document.getElementById('pendingListingStatCount').textContent = String(rows.length);
+      if (!rows.length) {
+        const empty = node('div', 'dash-empty');
+        empty.append(node('span', 'dash-empty-icon', '✓'));
+        empty.append(node('h3', '', 'No listings waiting for review'));
+        target.replaceChildren(empty);
+        return;
+      }
+      target.innerHTML = rows.map((row) => `<article class="request-card" data-review-id="${escapeHtml(row.id)}"><div class="request-head"><div><span class="request-role">${escapeHtml(propertyTypeName(row.property_type))}</span><h3>${escapeHtml(row.title)}</h3></div><span class="request-date">Submitted ${new Date(row.created_at).toLocaleDateString()}</span></div><p class="request-details">${escapeHtml(row.description || 'No description supplied.')}</p><div class="listing-review-meta"><span>${escapeHtml(row.location)} · ${escapeHtml(row.institution)}</span><span>${escapeHtml(row.availability)}</span><span>${escapeHtml(row.contact_name)} · ${escapeHtml(row.contact_phone)}</span><strong>KSh ${Number(row.monthly_rent).toLocaleString()} rent · KSh ${Number(row.deposit).toLocaleString()} deposit</strong><small>Advertiser account: ${escapeHtml(row.owner_id)}</small></div><div class="request-actions"><button class="btn sm" type="button" data-approve-listing>Approve and publish</button><button class="btn sm btn-decline" type="button" data-reject-listing>Suspend</button></div></article>`).join('');
+      target.querySelectorAll('[data-approve-listing]').forEach((button) => button.addEventListener('click', () => reviewListing(button, 'published')));
+      target.querySelectorAll('[data-reject-listing]').forEach((button) => button.addEventListener('click', () => {
+        addRejectionComposer(button.closest('[data-review-id]'), 'Send message and suspend', (message) => reviewListing(button, 'rejected', message));
+      }));
+    }
+
+    async function loadListingPayments() {
+      if (!adminReady) return;
+      const target = document.getElementById('listingPaymentQueue');
+      const count = document.getElementById('pendingPaymentCount');
+      target.replaceChildren(node('div', 'dash-empty', 'Loading payment codes…'));
+      const { data: payments, error } = await supabase.from('listing_payments').select('id, owner_id, account_role, amount_ksh, transaction_code, payment_purpose, property_id, status, created_at').eq('status', 'pending').order('created_at', { ascending: true });
+      if (error) {
+        count.textContent = '—';
+        target.replaceChildren(node('div', 'dash-empty', 'Could not load payment codes. Apply supabase/listing_payments.sql and refresh.'));
+        return;
+      }
+      const rows = payments || [];
+      count.textContent = String(rows.length);
+      if (!rows.length) {
+        target.replaceChildren(node('div', 'dash-empty', 'No listing payment codes are waiting for review.'));
+        return;
+      }
+      const ownerIds = [...new Set(rows.map((payment) => payment.owner_id))];
+      const { data: profiles } = await supabase.from('profiles').select('*').in('id', ownerIds);
+      const profileById = new Map((profiles || []).map((profile) => [profile.id, profile]));
+      const propertyIds = [...new Set(rows.map((payment) => payment.property_id).filter(Boolean))];
+      const { data: properties } = propertyIds.length ? await supabase.from('properties').select('id, title').in('id', propertyIds) : { data: [] };
+      const propertyById = new Map((properties || []).map((property) => [property.id, property]));
+      target.replaceChildren(...rows.map((payment) => {
+        const profile = profileById.get(payment.owner_id) || {};
+        const card = node('article', 'request-card');
+        const head = node('div', 'request-head');
+        const identity = node('div');
+        identity.append(node('span', 'request-role', `${payment.account_role.toUpperCase()} · KSh ${Number(payment.amount_ksh).toLocaleString()}`));
+        identity.append(node('h3', '', profile.full_name || profile.name || profile.display_name || 'Name not provided'));
+        head.append(identity, node('span', 'request-date', new Date(payment.created_at).toLocaleString()));
+        card.append(head);
+        const listingTitle = propertyById.get(payment.property_id)?.title || 'listing';
+        const purpose = payment.payment_purpose === 'renewal' ? `Monthly renewal for: ${listingTitle}` : `First monthly fee for: ${listingTitle}`;
+        card.append(node('p', 'request-details', `${purpose} · M-Pesa transaction code: ${payment.transaction_code}`));
+        card.append(node('p', 'request-user', `Email: ${profile.email || 'Not available'} · Phone: ${profile.phone || profile.phone_number || 'Not available'}`));
+        card.append(node('p', 'request-user', `Advertiser account: ${payment.owner_id} · Destination number: 0768835696`));
+        const actions = node('div', 'request-actions');
+        const approve = node('button', 'btn sm', 'Confirm payment');
+        const reject = node('button', 'btn sm btn-decline', 'Reject code');
+        approve.type = reject.type = 'button';
+        approve.addEventListener('click', () => reviewListingPayment(payment, 'approved', approve, reject));
+        reject.addEventListener('click', () => reviewListingPayment(payment, 'rejected', approve, reject));
+        actions.append(approve, reject);
+        card.append(actions);
+        return card;
+      }));
+    }
+
+    async function reviewListingPayment(payment, decision, approve, reject) {
+      if (decision === 'approved' && !confirm(`Confirm that ${payment.transaction_code} appears in your M-Pesa records for KSh ${Number(payment.amount_ksh).toLocaleString()}? This will publish or renew the listing for one month.`)) return;
+      approve.disabled = reject.disabled = true;
+      const { data, error } = await supabase.rpc('review_listing_payment', { p_payment_id: payment.id, p_decision: decision });
+      approve.disabled = reject.disabled = false;
+      if (error || !data) {
+        showStatus(error?.message || 'This payment code was already reviewed.', true);
+        return;
+      }
+      showStatus(decision === 'approved' ? (payment.payment_purpose === 'renewal' ? 'Payment confirmed. The selected listing has been renewed for one month.' : 'Payment confirmed. The approved listing is now visible to students for one month.') : 'Payment code rejected.');
+      await loadListingPayments();
+    }
+
+    async function reviewListing(button, decision, message = '') {
+      const card = button.closest('[data-review-id]');
+      const id = card.dataset.reviewId;
+      card.querySelectorAll('button').forEach((item) => { item.disabled = true; });
+      const result = decision === 'rejected'
+        ? await supabase.rpc('reject_property_listing', { p_property_id: id, p_message: message })
+        : await supabase.from('properties').update({ status: decision, moderation_note: null }).eq('id', id).eq('status', 'pending').select('id').maybeSingle();
+      const error = result.error;
+      const data = decision === 'rejected' ? result.data : result.data?.id;
+      if (error || !data) {
+        showStatus(error?.code === '42883' || error?.code === 'PGRST202' ? 'Messaging is not set up yet. Run supabase/admin_inbox.sql in Supabase.' : error?.message || 'This listing was already reviewed or could not be updated.', true);
+      } else {
+        showStatus(decision === 'published' ? 'Listing approved and published for students.' : 'Listing suspended. Your message was sent to the advertiser’s inbox.');
+      }
+      await loadListingReviews();
+      if (decision === 'rejected') await loadDeclinedReviews();
+    }
+
+    async function review(request, action, approveButton, declineButton, message = '') {
+      if (busy) return;
+      busy = true;
+      approveButton.disabled = true;
+      declineButton.disabled = true;
+      showStatus(action === 'approve' ? 'Approving application…' : 'Suspending application…');
+      try {
+        const { data: updatedCount, error: reviewError } = await supabase.rpc('review_verification_request', {
+          p_request_id: request.id,
+          p_decision: action === 'approve' ? 'approved' : 'rejected',
+          p_message: action === 'approve' ? null : message
+        });
+        if (reviewError) throw reviewError;
+        if (!updatedCount) throw new Error('This request was already reviewed or could not be updated.');
+
+        showStatus(action === 'approve' ? 'Application approved in Supabase. The account now has advertiser access.' : `Application suspended and a message sent to the applicant’s inbox. ${updatedCount > 1 ? 'Duplicate pending requests for this applicant and role were also removed from the queue.' : ''}`);
+        await loadRequests();
+        if (action === 'decline') await loadDeclinedReviews();
+        if (action === 'approve') await loadAccounts(request.applicant_role);
+      } catch (error) {
+        showStatus(error.code === '42883' || error.code === 'PGRST202'
+          ? 'Admin messaging is not set up yet. Run supabase/admin_inbox.sql in Supabase.'
+          : error.message || 'Could not save the review. Check administrator database permissions and try again.', true);
+        await loadRequests();
+      } finally {
+        busy = false;
+      }
+    }
+
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      if (!session) {
+        window.location.replace('account.html?mode=login');
+      } else {
+        const { data: profile, error } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        if (error || !profile) throw new Error('We could not load your account profile.');
+        if (profile.role !== 'admin') {
+          const destination = { student: 'find.html', landlord: 'landlord-dashboard.html', agent: 'agent-dashboard.html', admin: 'admin-dashboard.html' }[profile.role] || 'account.html';
+          window.location.replace(destination);
+        } else {
+          adminReady = true;
+          adminUserId = session.user.id;
+          document.getElementById('adminName').textContent = session.user.user_metadata?.full_name || session.user.email || 'Admin';
+          await loadRequests();
+          await loadListingReviews();
+          if (listingPaymentsEnabledForTesting) await loadListingPayments();
+          await loadAllAccounts();
+          await loadUniversities();
+          await loadDeclinedReviews();
+        }
+      }
+    } catch (error) {
+      showStatus(error.message || 'Unable to verify administrator access.', true);
+      list.replaceChildren(node('div', 'dash-empty', 'This page is available to administrator accounts only.'));
+    }
+
+    document.getElementById('refreshRequests').addEventListener('click', loadRequests);
+    document.getElementById('refreshListings').addEventListener('click', loadListingReviews);
+    document.getElementById('advertiserReviewsShortcut').addEventListener('click', () => {
+      if (currentSection !== 'requests') {
+        sectionHistory.push(currentSection);
+        currentSection = 'requests';
+        history.replaceState(null, '', '#requests');
+        sectionBack.disabled = sectionHistory.length === 0;
+      }
+      document.querySelectorAll('.dash-nav a[href^="#"]').forEach((item) => item.classList.toggle('active', item.getAttribute('href') === '#requests'));
+      showDashboardSection('requests');
+    });
+    document.getElementById('listingRequestsShortcut').addEventListener('click', () => {
+      if (currentSection !== 'listings') {
+        sectionHistory.push(currentSection);
+        currentSection = 'listings';
+        history.replaceState(null, '', '#listings');
+        sectionBack.disabled = sectionHistory.length === 0;
+      }
+      document.querySelectorAll('.dash-nav a[href^="#"]').forEach((item) => item.classList.toggle('active', item.getAttribute('href') === '#listings'));
+      showDashboardSection('listings');
+    });
+    if (listingPaymentsEnabledForTesting) document.getElementById('refreshListingPayments').addEventListener('click', loadListingPayments);
+    document.getElementById('refreshDeclined').addEventListener('click', loadDeclinedReviews);
+    document.getElementById('refreshUniversities').addEventListener('click', loadUniversities);
+    document.getElementById('accountSearch').addEventListener('input', applyAccountSearch);
+    document.getElementById('accountSearchResults').addEventListener('click', async (event) => {
+      const deleteButton = event.target.closest('.account-delete-button');
+      if (deleteButton) {
+        const accountId = deleteButton.dataset.accountId;
+        const role = deleteButton.dataset.accountRole;
+        const accountName = deleteButton.dataset.accountName || 'this user';
+        const accountEmail = deleteButton.dataset.accountEmail;
+        const identity = accountEmail ? `${accountName} (${accountEmail})` : accountName;
+        if (!confirm(`Permanently delete ${identity}, including their property listings and verification requests? This cannot be undone.`)) return;
+        deleteButton.disabled = true;
+        deleteButton.textContent = 'Deleting account…';
+        try {
+          const { error } = await supabase.rpc('admin_delete_user', { p_user_id: accountId });
+          if (error) throw error;
+          accountProfiles.delete(accountId);
+          await loadAccounts(role);
+          document.getElementById('accountSearchStatus').textContent = `${accountName} and their linked account records were deleted.`;
+        } catch (error) {
+          deleteButton.disabled = false;
+          deleteButton.textContent = 'Delete account';
+          document.getElementById('accountSearchStatus').textContent = ['42883', 'PGRST202'].includes(error.code)
+            ? 'Account deletion is not set up yet. Run supabase/admin_delete_user.sql in the Supabase SQL Editor.'
+            : `Could not delete ${accountName}: ${error.message}`;
+        }
+        return;
+      }
+      const result = event.target.closest('.account-search-result');
+      if (!result) return;
+      const target = accountSections[result.dataset.accountRole];
+      const row = Array.from(target?.list.querySelectorAll('.account-table tbody tr') || [])
+        .find((candidate) => candidate.dataset.accountId === result.dataset.accountId);
+      if (!row) return;
+      document.querySelectorAll('.account-row-target').forEach((item) => item.classList.remove('account-row-target'));
+      row.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+      row.focus({ preventScroll: true });
+      row.classList.add('account-row-target');
+      window.setTimeout(() => row.classList.remove('account-row-target'), 1800);
+    });
+    document.getElementById('universitySelect').addEventListener('change', (event) => {
+      document.getElementById('removeUniversityButton').disabled = !event.target.value;
+    });
+    document.querySelectorAll('[data-refresh-users]').forEach((button) => button.addEventListener('click', () => loadAccounts(button.dataset.refreshUsers)));
+  </script>
+</body>
+</html>

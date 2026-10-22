@@ -1,1 +1,498 @@
-<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Login / Sign Up — Nyumba Link</title><link rel=stylesheet href=styles.css><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel=stylesheet></head><body><div id=hd></div><main><section class=wrap><form id=af class="panel form"><h1>Login / Sign up</h1><input name=name placeholder="Full name" required><input name=email type=email placeholder="Email" required><select name=role><option value=student>Student</option><option value=landlord>Individual landlord</option><option value=agent>Real estate agent</option></select><button class=btn>Continue</button><small>Demo sign-in only: nothing is sent to a server yet. Real accounts, dashboard and admin come with the Supabase step.</small></form></section></main><footer id=ft></footer><div id=toast></div><script src=common.js></script><script>const r=new URLSearchParams(location.search).get('role');if(r)af.role.value=r;af.onsubmit=e=>{e.preventDefault();localStorage.nl_user=JSON.stringify(Object.fromEntries(new FormData(af)));location.href='index.html'}</script></body></html>
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login / Sign Up — Nyumba Link</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    .auth-message {
+      display: block;
+      margin-top: 16px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .auth-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .auth-tabs button {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      cursor: pointer;
+      background: transparent;
+    }
+
+    .auth-tabs button.active {
+      background: #173b65;
+      color: white;
+      border-color: #173b65;
+    }
+
+    .auth-link {
+      justify-self: start;
+      margin-top: -10px;
+      border: 0;
+      padding: 0;
+      background: none;
+      color: #1d4ed8;
+      font: inherit;
+      font-size: .9rem;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .auth-field {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 14px;
+    }
+
+    .auth-field input,
+    .auth-field select,
+    .auth-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    .auth-field label {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    #authMessage {
+      white-space: pre-wrap;
+    }
+
+    .auth-note {
+      line-height: 1.6;
+      display: block;
+      margin-top: 12px;
+    }
+  </style>
+
+</head>
+
+<body>
+
+  <div id="hd"></div>
+
+  <main>
+    <section class="wrap">
+      <form id="authForm" class="panel form">
+        <h1 id="formTitle">Create your account</h1>
+
+        <div class="auth-tabs" id="authTabs">
+          <button type="button" id="signupTab" class="active">
+            Sign up
+          </button>
+          <button type="button" id="loginTab">
+            Log in
+          </button>
+        </div>
+
+        <div id="signupFields">
+          <div class="auth-field">
+            <label for="fullName">Full name</label>
+            <input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="Your full name" required>
+          </div>
+
+          <div class="auth-field">
+            <label for="phone">Phone number</label>
+            <input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="Your phone number">
+          </div>
+
+          <div class="auth-field">
+            <label for="requestedRole">I want to use Nyumba Link as</label>
+            <select id="requestedRole" name="requestedRole">
+              <option value="student">Student — find accommodation</option>
+              <option value="landlord">Landlord — advertise my property</option>
+              <option value="agent">Real estate agent — advertise properties</option>
+            </select>
+          </div>
+
+          <div id="verificationFields" hidden>
+            <div class="auth-field">
+              <label for="verificationDetails">
+                Tell us about your property or agency
+              </label>
+              <textarea id="verificationDetails" name="verificationDetails" rows="4"
+                placeholder="Describe your property ownership or agency and the properties you intend to advertise."></textarea>
+            </div>
+            <small>
+              Advertiser accounts require administrator verification
+              before they can submit property listings.
+            </small>
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+        </div>
+
+        <div class="auth-field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="new-password" minlength="8"
+            placeholder="At least 8 characters" required>
+        </div>
+
+        <button type="button" id="forgotPassword" class="auth-link" hidden>Forgot password?</button>
+
+        <button id="submitButton" class="btn" type="submit">
+          Create account
+        </button>
+
+        <small id="authMessage" class="auth-message" role="status" aria-live="polite"></small>
+
+        <small class="auth-note">
+          Keep your password private. Landlord and agent applications
+          must be reviewed before advertising properties.
+        </small>
+      </form>
+    </section>
+  </main>
+
+  <footer id="ft"></footer>
+  <div id="toast"></div>
+
+  <script src="common.js"></script>
+
+  <script type="module">
+    import { supabase } from './supabase-client.js';
+
+    const form = document.getElementById('authForm');
+    const signupTab = document.getElementById('signupTab');
+    const loginTab = document.getElementById('loginTab');
+    const signupFields = document.getElementById('signupFields');
+    const requestedRole = document.getElementById('requestedRole');
+    const verificationFields = document.getElementById('verificationFields');
+    const verificationDetails = document.getElementById('verificationDetails');
+    const fullName = document.getElementById('fullName');
+    const phone = document.getElementById('phone');
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const submitButton = document.getElementById('submitButton');
+    const formTitle = document.getElementById('formTitle');
+    const authMessage = document.getElementById('authMessage');
+    const authTabs = document.getElementById('authTabs');
+    const forgotPassword = document.getElementById('forgotPassword');
+    const passwordLabel = document.querySelector('label[for="password"]');
+
+    let mode = 'signup';
+
+    function showMessage(message) {
+      authMessage.textContent = message;
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+
+      const signingUp = mode === 'signup';
+      const recovery = mode === 'recovery';
+      const requestingReset = mode === 'forgot';
+
+      signupFields.hidden = !signingUp;
+      authTabs.hidden = recovery;
+      password.closest('.auth-field').hidden = requestingReset;
+      password.required = !requestingReset;
+      email.closest('.auth-field').hidden = recovery;
+      email.required = !recovery;
+      forgotPassword.hidden = mode !== 'login';
+      fullName.required = signingUp;
+
+      password.autocomplete = signingUp || recovery ? 'new-password' : 'current-password';
+      passwordLabel.textContent = recovery ? 'New password' : 'Password';
+      password.placeholder = recovery ? 'Choose at least 8 characters' : 'At least 8 characters';
+
+      verificationDetails.required =
+        signingUp &&
+        ['landlord', 'agent'].includes(requestedRole.value);
+
+      verificationFields.hidden =
+        !signingUp ||
+        !['landlord', 'agent'].includes(requestedRole.value);
+
+      signupTab.classList.toggle('active', signingUp);
+      loginTab.classList.toggle('active', !signingUp);
+
+      formTitle.textContent = signingUp ? 'Create your account'
+        : recovery ? 'Choose a new password'
+        : requestingReset ? 'Reset your password'
+        : 'Welcome back';
+
+      submitButton.textContent = signingUp ? 'Create account'
+        : recovery ? 'Save new password'
+        : requestingReset ? 'Send reset link'
+        : 'Log in';
+
+      showMessage('');
+    }
+
+    signupTab.addEventListener('click', () => setMode('signup'));
+    loginTab.addEventListener('click', () => setMode('login'));
+    forgotPassword.addEventListener('click', () => setMode('forgot'));
+
+    supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setMode('recovery');
+    });
+
+    requestedRole.addEventListener('change', () => {
+      const advertiser = ['landlord', 'agent'].includes(
+        requestedRole.value
+      );
+
+      verificationFields.hidden = !advertiser;
+      verificationDetails.required = advertiser;
+    });
+
+    async function submitVerificationRequest(user) {
+      const intendedRole = user.user_metadata?.requested_role;
+
+      if (!['landlord', 'agent'].includes(intendedRole)) {
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role, verification_status')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        throw new Error(
+          'Your account exists, but we could not check your profile. ' +
+          'Please try logging in again.'
+        );
+      }
+
+      // Never create a request for an account already assigned
+      // an advertiser or administrator role.
+      if (profile.role !== 'student') {
+        return;
+      }
+
+      const { data: existingRequests, error: requestError } =
+        await supabase
+          .from('verification_requests')
+          .select('id, status')
+          .eq('user_id', user.id)
+          .eq('applicant_role', intendedRole)
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+      if (requestError) {
+        throw new Error(
+          'We could not check your verification request. ' +
+          'Please try again.'
+        );
+      }
+
+      if (existingRequests.length > 0) return existingRequests[0].status;
+
+      const details =
+        user.user_metadata?.verification_details;
+
+      if (!details) {
+        return;
+      }
+
+      const { error: insertError } = await supabase
+        .from('verification_requests')
+        .insert({
+          user_id: user.id,
+          applicant_role: intendedRole,
+          details,
+          status: 'pending'
+        });
+
+      if (insertError) {
+        throw new Error(
+          'Your account is active, but we could not submit ' +
+          'your advertiser verification request. Please contact support.'
+        );
+      }
+      return 'pending';
+    }
+
+    async function routeUser(user) {
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role, verification_status')
+        .eq('id', user.id)
+        .single();
+
+      if (error || !profile) {
+        throw new Error(
+          'You are signed in, but your profile could not be loaded.'
+        );
+      }
+
+      // Do not rely on a role selected in the registration form.
+      // The database profile is the source of truth.
+      if (profile.role === 'admin') {
+        window.location.href = 'admin-dashboard.html';
+        return;
+      }
+
+      if (profile.role === 'landlord' || profile.role === 'agent') {
+        if (profile.verification_status !== 'verified') {
+          showMessage(
+            'You are signed in, but your advertiser account ' +
+            'is not verified yet.'
+          );
+          return;
+        }
+
+        window.location.href =
+          profile.role === 'landlord'
+            ? 'landlord-dashboard.html'
+            : 'agent-dashboard.html';
+        return;
+      }
+
+      window.location.href = 'find.html';
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      submitButton.disabled = true;
+      showMessage('Please wait...');
+
+      try {
+        if (mode === 'forgot') {
+          const { error } = await supabase.auth.resetPasswordForEmail(email.value.trim(), {
+            redirectTo: `${location.origin}${location.pathname}?mode=recovery`
+          });
+          if (error) throw error;
+          showMessage('If an account exists for that email, a password reset link has been sent. Check your inbox.');
+          return;
+        } else if (mode === 'recovery') {
+          const { error } = await supabase.auth.updateUser({ password: password.value });
+          if (error) throw error;
+          setMode('login');
+          showMessage('Your password has been updated. You can now log in with your new password.');
+          return;
+        } else if (mode === 'signup') {
+          const role = requestedRole.value;
+
+          const { data, error } = await supabase.auth.signUp({
+            email: email.value.trim(),
+            password: password.value,
+            options: {
+              data: {
+                full_name: fullName.value.trim(),
+                phone: phone.value.trim(),
+                requested_role: role,
+                verification_details:
+                  ['landlord', 'agent'].includes(role)
+                    ? verificationDetails.value.trim()
+                    : null
+              }
+            }
+          });
+
+          if (error) {
+            throw error;
+          }
+
+          if (!data.user) {
+            throw new Error(
+              'Supabase did not return a user. Please try again.'
+            );
+          }
+
+          if (!data.session) {
+            showMessage(
+              'Account created. Check your email for a ' +
+              'confirmation link, then return here and log in. ' +
+              'Your account will remain a student account until ' +
+              'an administrator approves any advertiser request.'
+            );
+            return;
+          }
+
+          await submitVerificationRequest(data.user);
+
+          showMessage('Account created successfully.');
+
+          await routeUser(data.user);
+        } else {
+          const { data, error } =
+            await supabase.auth.signInWithPassword({
+              email: email.value.trim(),
+              password: password.value
+            });
+
+          if (error) {
+            throw error;
+          }
+
+          const requestState = await submitVerificationRequest(data.user);
+          if (requestState === 'rejected') {
+            window.location.href = 'inbox.html';
+            return;
+          }
+
+          await routeUser(data.user);
+        }
+      } catch (error) {
+        console.error('Authentication error:', error);
+
+        showMessage(
+          error.message ||
+          'Something went wrong. Please try again.'
+        );
+      } finally {
+        submitButton.disabled = false;
+      }
+    });
+
+    // Allow account.html?role=landlord or ?role=agent
+    // to preselect an advertiser option.
+    const urlRole = new URLSearchParams(location.search).get('role');
+
+    if (['student', 'landlord', 'agent'].includes(urlRole)) {
+      requestedRole.value = urlRole;
+    }
+
+    const requestedMode = new URLSearchParams(location.search).get('mode');
+    setMode(requestedMode === 'login' ? 'login' : requestedMode === 'recovery' ? 'recovery' : 'signup');
+
+    // Resume the saved session instead of leaving an already signed-in
+    // user on the sign-in form when they return to this page.
+    if (requestedMode !== 'recovery' && requestedMode !== 'forgot') {
+      submitButton.disabled = true;
+      showMessage('Restoring your account…');
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        if (session) {
+          await routeUser(session.user);
+        } else {
+          submitButton.disabled = false;
+          showMessage('');
+        }
+      } catch (error) {
+        submitButton.disabled = false;
+        showMessage(error.message || 'Could not restore your account. Please try again.');
+      }
+    }
+  </script>
+
+</body>
+
+</html>

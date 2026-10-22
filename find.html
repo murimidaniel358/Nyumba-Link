@@ -25,9 +25,16 @@
   <footer id=ft></footer>
   <div id=toast></div>
   <script src=common.js></script>
-  <script>const f = mountSB(() => go()); const N = s => D.filter(p => p.status == s).length;
+  <script type="module">
+    import { loadPublishedListings } from './public-listings.js';
+    const f = mountSB(() => go());
+    const go = () => { const r = filt(f); $('#ct').textContent = r.length + ' listings found'; $('#g').innerHTML = L(r, card) || '<p>No matches. Try widening your budget or filters.</p>' };
+    const result = await loadPublishedListings(D);
+    if (result.error) $('#ct').textContent = 'Showing sample listings while live listings are unavailable.';
+    const N = s => D.filter(p => p.status == s).length;
     $('#st').innerHTML = L([['Total listings', D.length, 'On the platform', '#2563eb'], ['Available', N('Available'), 'Ready to view', '#16a34a'], ['Limited rooms', N('Limited rooms'), 'Going fast', '#d97706'], ['Fully booked', N('Fully booked'), 'Check back soon', '#e11d48']], s => `<div class=stat style="--c:${s[3]}"><small>${s[0]}</small><b>${s[1]}</b><span>${s[2]}</span></div>`);
-    const go = () => { const r = filt(f); $('#ct').textContent = r.length + ' listings found'; $('#g').innerHTML = L(r, card) || '<p>No matches. Try widening your budget or filters.</p>' }; go()</script>
+    go();
+  </script>
 </body>
 
 </html>
